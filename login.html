@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | FuelTracker</title>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer src="app.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+     const user = JSON.parse(localStorage.getItem("currentUser"));
+
+  if (user) {
+    // Ask user what to do instead of forcing redirect
+    console.log("User already logged in:", user);
+  }
+});
+  </script>
+
+</head>
+
+<body>
+
+  <h2>Login</h2>
+
+  <input type="email" id="loginEmail" placeholder="Enter email">
+  <br><br>
+
+  <input type="password" id="loginPassword" placeholder="Enter password">
+  <br><br>
+
+  <!-- Better: bind in JS but keeping your structure -->
+  <button onclick="login()">Login</button>
+
+</body>
+</html>

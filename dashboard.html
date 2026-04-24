@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Dashboard | FuelTracker</title>
+  
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <script defer src="app.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  // ✅ 1. Protect page
+  checkUser("customer");
+
+  // ✅ 2. Get user
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  // ✅ 3. Welcome + initial load
+  const welcome = document.getElementById("welcome");
+
+  if (welcome) {
+    welcome.innerText = "Welcome " + user.email + " (Customer)";
+    loadApprovedStations(); 
+  }
+
+  // ✅ GET ALL INPUTS
+  const searchInput = document.getElementById("searchInput");
+  const fuelFilter = document.getElementById("fuelFilter");
+  const priceInput = document.getElementById("maxPrice");
+
+  // ✅ SEARCH
+  if (searchInput) {
+    searchInput.addEventListener("input", function () {
+      const fuel = fuelFilter.value;
+      const price = priceInput.value;
+
+      loadApprovedStations(this.value, fuel, price);
+    });
+  }
+
+  // ✅ FUEL FILTER
+  if (fuelFilter) {
+    fuelFilter.addEventListener("change", function () {
+      const search = searchInput.value;
+      const price = priceInput.value;
+
+      loadApprovedStations(search, this.value, price);
+    });
+  }
+
+  // ✅ PRICE FILTER
+  if (priceInput) {
+    priceInput.addEventListener("input", function () {
+      const search = searchInput.value;
+      const fuel = fuelFilter.value;
+
+      loadApprovedStations(search, fuel, this.value);
+    });
+  }
+
+});
+</script>
+
+</head>
+
+<body>
+
+  <h1 id="welcome">Customer Dashboard</h1>
+  <h2>Available Petrol Stations</h2>
+
+  <!-- 🔍 SEARCH INPUT (ADD THIS HERE) -->
+<input type="text" id="searchInput" placeholder="Search by name or location">
+
+<select id="fuelFilter">
+  <option value="">All Fuel Types</option>
+  <option value="petrol">Petrol Available</option>
+  <option value="diesel">Diesel Available</option>
+  <option value="kerosene">Kerosene Available</option>
+</select>
+
+<input type="number" id="maxPrice" placeholder="Max petrol price">
+<br><br>
+
+<div id="approvedStations"></div>
+
+  <!-- Logout button -->
+  <button id="logoutBtn">Logout</button>
+
+</body>
+</html>

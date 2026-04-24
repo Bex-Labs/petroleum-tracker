@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FuelTracker </title>
+
+  <!-- Supabase Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  
+  <!-- Your JS -->
+  <script defer src="app.js"></script>
+</head>
+
+<body>
+
+  <h2>Sign Up</h2>
+
+  <input type="email" id="email" placeholder="Enter email">
+  <br><br>
+
+  <input type="password" id="password" placeholder="Enter password">
+  <br><br>
+
+  <select id="role">
+    <option value="customer">Customer</option>
+    <option value="seller">Seller</option>
+    <option value="admin">Admin</option>
+  </select>
+
+  <br><br>
+
+  <button onclick="signUp()">Sign Up</button>
+
+  <br><br>
+
+  <a href="login.html">Already have an account? Login</a>
+
+</body>
+</html>

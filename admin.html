@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | FuelTracker</title>
+   
+ <!-- Supabase (keep if needed elsewhere) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <!-- MAIN APP SCRIPT -->
+  <script defer src="app.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+      // ✅ STEP 1: Protect page
+      checkUser("admin");
+
+      // ✅ STEP 2: Get user from localStorage
+      const user = JSON.parse(localStorage.getItem("currentUser"));
+
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      // ✅ STEP 3: Show welcome text
+      const welcome = document.getElementById("welcome");
+      if (welcome) {
+        welcome.innerText = "Welcome " + user.email + " (Admin)";
+ 
+        // ✅ ADD THIS LINE
+        loadUsers();
+        loadPendingStations(); 
+        loadAllStations(); // ✅ VERY IMPORTANT
+
+      }
+    });
+  </script>
+
+</head>
+
+<body>
+
+  <h1 id="welcome">Admin Dashboard</h1>
+  
+  <h2>All Users</h2>
+
+  <div id="userList"></div>
+
+  <h2>Pending Stations</h2>
+
+  <div id="stationList"></div>
+  
+  <h2>Manage Stations</h2>
+  <div id="allStations"></div>
+  <!-- FIXED logout -->
+  <button id="logoutBtn">Logout</button>
+
+</body>
+</html>

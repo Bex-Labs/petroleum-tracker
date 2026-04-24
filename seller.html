@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seller Dashboard | FuelTracker</title>
+ 
+  <!-- Supabase (keep if you are using it elsewhere) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer src="app.js"></script>
+   <script>
+
+   document.addEventListener("DOMContentLoaded", function () {
+
+      // ✅ STEP 1: Wait for auth check
+      if (typeof checkUser === "function") {
+        checkUser("seller");
+      } else {
+        console.error("checkUser is not defined. Check app.js loading.");
+        window.location.href = "login.html";
+        return;
+      }
+
+      // ✅ STEP 2: Get user safely
+      let user;
+
+      if (typeof getUserDetails === "function") {
+        user =  getUserDetails();
+      } else {
+        // fallback (IMPORTANT FIX)
+        user = JSON.parse(localStorage.getItem("currentUser"));
+      }
+
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      if (user.role !== "seller") {
+        alert("Access denied");
+        window.location.href = "login.html";
+        return;
+      }
+
+      // ✅ STEP 3: Show welcome message safely
+      const welcomeEl = document.getElementById("welcome");
+      if (welcomeEl) {
+        welcomeEl.innerText = "Welcome " + user.email + " (Seller)";
+      }
+      // ✅ ADD THIS
+      loadMyStations();
+      loadSellerStations(); // ✅ ADD THIS
+    });
+
+    </script>
+</head>
+
+<body>
+
+  <h1 id="welcome">Seller Dashboard</h1>
+
+  <h2>My Stations</h2>
+
+ <div id="myStations"></div>
+
+  <h2>Add Petrol Station</h2>
+
+<input type="text" id="stationName" placeholder="Station Name"><br><br>
+
+<input type="text" id="stationLocation" placeholder="Location"><br><br>
+
+<!-- ✅ ADD THIS BLOCK -->
+<label>Latitude:</label>
+<input type="number" id="lat" step="any" placeholder="e.g. 9.0765">
+<br><br>
+
+<label>Longitude:</label>
+<input type="number" id="lng" step="any" placeholder="e.g. 7.3986">
+<br><br>
+<!-- ✅ END -->
+ 
+<input type="file" id="stationImage"><br><br>
+
+<button onclick="addStation()">Submit Station</button>
+
+<h2>Update Fuel Availability</h2>
+
+<select id="stationSelect"></select>
+
+<br><br>
+
+<label>Petrol:</label>
+<select id="petrol">
+  <option value="true">Available</option>
+  <option value="false">Not Available</option>
+</select>
+
+<br>
+
+<!-- NEW: Petrol Price -->
+<label>Petrol Price:</label>
+<input type="number" id="petrolPrice" placeholder="Enter petrol price">
+
+<br><br>
+
+<label>Diesel:</label>
+<select id="diesel">
+  <option value="true">Available</option>
+  <option value="false">Not Available</option>
+</select>
+
+<br>
+
+<!-- NEW: Diesel Price -->
+<label>Diesel Price:</label>
+<input type="number" id="dieselPrice" placeholder="Enter diesel price">
+
+<br><br>
+
+<label>Kerosene:</label>
+<select id="kerosene">
+  <option value="true">Available</option>
+  <option value="false">Not Available</option>
+</select>
+
+<br>
+
+<!-- NEW: Kerosene Price -->
+<label>Kerosene Price:</label>
+<input type="number" id="kerosenePrice" placeholder="Enter kerosene price">
+
+<br><br>
+
+<button onclick="updateFuel()">Update Fuel</button>
+
+<!-- FIXED logout binding -->
+  <button id="logoutBtn">Logout</button>
+
+</body>
+</html>
