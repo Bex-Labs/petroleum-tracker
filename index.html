@@ -3,252 +3,603 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Up | PetroTrack</title>
+  <title>PetroTrack — Find Fuel Near You</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script defer src="app.js"></script>
   <style>
-    .role-selector {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 18px;
+    /* ── Landing-specific styles ── */
+    body { overflow-x: hidden; }
+
+    /* NAV */
+    .landing-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 5%;
+      background: rgba(7,10,16,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(37,44,61,0.6);
     }
 
-    .role-card { position: relative; cursor: pointer; }
-
-    .role-card input[type="radio"] {
-      position: absolute; opacity: 0; width: 0; height: 0;
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      font-family: var(--font-display); font-size: 1.1rem; font-weight: 700;
+      color: var(--text-1);
     }
 
-    .role-label {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      padding: 16px 10px;
-      border: 1px solid var(--border);
-      border-radius: var(--r-md);
-      background: var(--bg-input);
-      cursor: pointer;
-      transition: all 0.18s;
-      user-select: none;
+    .nav-brand-icon {
+      width: 32px; height: 32px; background: var(--accent);
+      border-radius: var(--r-sm);
+      display: flex; align-items: center; justify-content: center; font-size: 1rem;
     }
 
-    .role-label:hover {
-      border-color: var(--border-light);
-      background: var(--bg-surface);
-    }
+    .nav-links { display: flex; align-items: center; gap: 8px; }
 
-    .role-card input:checked + .role-label {
-      border-color: var(--accent);
-      background: var(--accent-glow);
-      box-shadow: 0 0 0 1px var(--accent);
-    }
-
-    .role-icon {
-      width: 40px; height: 40px;
-      border-radius: var(--r-md);
+    /* HERO */
+    .hero {
+      min-height: 100vh;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.25rem;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      transition: all 0.18s;
-    }
-
-    .role-card input:checked + .role-label .role-icon {
-      background: var(--accent-glow);
-      border-color: rgba(59,111,245,0.4);
-    }
-
-    .role-name {
-      font-size: 0.8rem;
-      font-weight: 700;
-      font-family: var(--font-display);
-      color: var(--text-2);
-      transition: color 0.18s;
-    }
-
-    .role-card input:checked + .role-label .role-name { color: var(--accent); }
-
-    .role-desc {
-      font-size: 0.65rem;
-      color: var(--text-3);
       text-align: center;
-      line-height: 1.4;
-    }
-
-    .role-label::after {
-      content: '';
-      position: absolute;
-      top: 8px; right: 8px;
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      border: 1.5px solid var(--border);
-      transition: all 0.18s;
-    }
-
-    .role-card input:checked + .role-label::after {
-      background: var(--accent);
-      border-color: var(--accent);
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath d='M1.5 4L3.5 6L6.5 2' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: center;
-    }
-
-    .error-msg {
-      background: var(--red-dim);
-      border: 1px solid rgba(239,68,68,0.25);
-      border-radius: var(--r-sm);
-      color: #f87171;
-      font-size: 0.78rem;
-      padding: 9px 12px;
-      margin-bottom: 14px;
-      display: none;
-    }
-    .error-msg.show { display: block; }
-
-    .success-msg {
-      background: var(--green-dim);
-      border: 1px solid rgba(34,197,94,0.25);
-      border-radius: var(--r-sm);
-      color: var(--green);
-      font-size: 0.78rem;
-      padding: 9px 12px;
-      margin-bottom: 14px;
-      display: none;
-    }
-    .success-msg.show { display: block; }
-
-    .auth-page { position: relative; overflow: hidden; }
-    .auth-bg-lines {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.04;
+      padding: 100px 5% 80px;
+      position: relative;
+      background: var(--bg-base);
       background-image:
-        repeating-linear-gradient(0deg, transparent, transparent 60px, var(--accent) 60px, var(--accent) 61px),
-        repeating-linear-gradient(90deg, transparent, transparent 60px, var(--accent) 60px, var(--accent) 61px);
+        radial-gradient(ellipse at 20% 40%, rgba(59,111,245,0.08) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 60%, rgba(245,166,35,0.05) 0%, transparent 55%);
     }
-    .auth-card { position: relative; z-index: 1; }
+
+    /* Animated grid lines */
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0; pointer-events: none; opacity: 0.03;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 50px, var(--accent) 50px, var(--accent) 51px),
+        repeating-linear-gradient(90deg, transparent, transparent 50px, var(--accent) 50px, var(--accent) 51px);
+    }
+
+    .hero-content { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--accent-glow); border: 1px solid rgba(59,111,245,0.25);
+      border-radius: 999px; padding: 5px 14px;
+      font-size: 0.72rem; font-weight: 600; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-eyebrow::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent); box-shadow: 0 0 6px var(--accent);
+      animation: blink 1.5s ease infinite;
+    }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 6vw, 3.8rem);
+      font-weight: 700; line-height: 1.1;
+      color: var(--text-1); margin-bottom: 1.25rem;
+    }
+
+    .hero-title span { color: var(--accent); }
+
+    .hero-sub {
+      font-size: clamp(0.9rem, 2vw, 1.05rem);
+      color: var(--text-2); line-height: 1.7;
+      max-width: 520px; margin: 0 auto 2.5rem;
+    }
+
+    .hero-cta {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; flex-wrap: wrap;
+    }
+
+    .btn-hero-primary {
+      background: var(--accent); color: #fff;
+      border: 1px solid var(--accent); border-radius: var(--r-md);
+      padding: 13px 28px; font-size: 0.9rem; font-weight: 600;
+      font-family: var(--font); cursor: pointer; transition: all 0.15s;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 7px;
+    }
+    .btn-hero-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+
+    .btn-hero-ghost {
+      background: transparent; color: var(--text-2);
+      border: 1px solid var(--border); border-radius: var(--r-md);
+      padding: 13px 28px; font-size: 0.9rem; font-weight: 600;
+      font-family: var(--font); cursor: pointer; transition: all 0.15s;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 7px;
+    }
+    .btn-hero-ghost:hover { border-color: var(--border-light); color: var(--text-1); }
+
+    .hero-stats {
+      display: flex; align-items: center; justify-content: center;
+      gap: 2rem; flex-wrap: wrap;
+      margin-top: 3.5rem; padding-top: 2.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .hero-stat-val {
+      font-family: var(--font-display); font-size: 1.7rem; font-weight: 700;
+      color: var(--text-1); line-height: 1;
+    }
+    .hero-stat-label { font-size: 0.72rem; color: var(--text-3); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.07em; }
+
+    .hero-stat-divider { width: 1px; height: 40px; background: var(--border); }
+
+    /* FEATURES */
+    .features {
+      padding: 100px 5%;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-label {
+      text-align: center;
+      font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--accent); margin-bottom: 12px;
+    }
+
+    .section-title {
+      text-align: center;
+      font-family: var(--font-display); font-size: clamp(1.5rem, 4vw, 2.2rem);
+      font-weight: 700; color: var(--text-1); margin-bottom: 0.75rem;
+    }
+
+    .section-sub {
+      text-align: center; font-size: 0.9rem; color: var(--text-2);
+      max-width: 500px; margin: 0 auto 3.5rem; line-height: 1.7;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px; max-width: 1100px; margin: 0 auto;
+    }
+
+    .feature-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 1.75rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .feature-card:hover { border-color: var(--border-light); transform: translateY(-3px); }
+
+    .feature-icon {
+      width: 44px; height: 44px; border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; margin-bottom: 1rem;
+      border: 1px solid var(--border);
+    }
+
+    .feature-title {
+      font-family: var(--font-display); font-size: 0.95rem;
+      font-weight: 700; color: var(--text-1); margin-bottom: 6px;
+    }
+
+    .feature-desc { font-size: 0.82rem; color: var(--text-2); line-height: 1.6; }
+
+    /* HOW IT WORKS */
+    .how-it-works {
+      padding: 100px 5%;
+      background: var(--bg-base);
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); border-radius: var(--r-lg);
+      overflow: hidden; max-width: 900px; margin: 0 auto;
+    }
+
+    .step {
+      background: var(--bg-card); padding: 2rem 1.75rem;
+      text-align: center;
+    }
+
+    .step-num {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--accent-glow); border: 1px solid rgba(59,111,245,0.3);
+      color: var(--accent); font-family: var(--font-display);
+      font-size: 0.85rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1rem;
+    }
+
+    .step-icon { font-size: 1.6rem; margin-bottom: 0.75rem; }
+
+    .step-title {
+      font-family: var(--font-display); font-size: 0.9rem;
+      font-weight: 700; color: var(--text-1); margin-bottom: 6px;
+    }
+
+    .step-desc { font-size: 0.78rem; color: var(--text-2); line-height: 1.6; }
+
+    /* ROLES */
+    .roles {
+      padding: 100px 5%;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .roles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px; max-width: 900px; margin: 0 auto;
+    }
+
+    .role-feature-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 1.75rem;
+      text-align: center; transition: all 0.2s;
+    }
+
+    .role-feature-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+    .role-feature-card.seller:hover { border-color: var(--amber); }
+    .role-feature-card.admin:hover  { border-color: var(--green); }
+
+    .role-big-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+
+    .role-feature-title {
+      font-family: var(--font-display); font-size: 1.1rem;
+      font-weight: 700; color: var(--text-1); margin-bottom: 6px;
+    }
+
+    .role-feature-desc { font-size: 0.8rem; color: var(--text-2); line-height: 1.6; margin-bottom: 1.25rem; }
+
+    .role-feature-list {
+      list-style: none; text-align: left;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+
+    .role-feature-list li {
+      display: flex; align-items: flex-start; gap: 7px;
+      font-size: 0.78rem; color: var(--text-2);
+    }
+
+    .role-feature-list li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+
+    /* FUEL TYPES */
+    .fuels {
+      padding: 80px 5%; background: var(--bg-base);
+    }
+
+    .fuels-grid {
+      display: flex; justify-content: center; flex-wrap: wrap;
+      gap: 12px; max-width: 700px; margin: 0 auto;
+    }
+
+    .fuel-type-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 1.5rem 2rem;
+      text-align: center; flex: 1; min-width: 140px;
+      transition: all 0.2s;
+    }
+    .fuel-type-card:hover { border-color: var(--border-light); transform: translateY(-2px); }
+
+    .fuel-type-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .fuel-type-name { font-family: var(--font-display); font-size: 0.9rem; font-weight: 700; color: var(--text-1); }
+    .fuel-type-abbr { font-size: 0.68rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 2px; }
+
+    /* CTA BANNER */
+    .cta-banner {
+      padding: 100px 5%; text-align: center;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border);
+      position: relative; overflow: hidden;
+    }
+
+    .cta-banner::before {
+      content: '';
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px; height: 300px;
+      background: radial-gradient(ellipse, rgba(59,111,245,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 700; color: var(--text-1); margin-bottom: 0.75rem;
+      position: relative; z-index: 1;
+    }
+
+    .cta-sub {
+      font-size: 0.9rem; color: var(--text-2); margin-bottom: 2rem;
+      position: relative; z-index: 1;
+    }
+
+    .cta-buttons {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; flex-wrap: wrap; position: relative; z-index: 1;
+    }
+
+    /* FOOTER */
+    .footer {
+      padding: 2rem 5%; border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+      background: var(--bg-base);
+    }
+
+    .footer-brand {
+      display: flex; align-items: center; gap: 8px;
+      font-family: var(--font-display); font-size: 0.9rem;
+      font-weight: 700; color: var(--text-1);
+    }
+
+    .footer-copy { font-size: 0.75rem; color: var(--text-3); }
+
+    .footer-links {
+      display: flex; gap: 16px;
+    }
+
+    .footer-links a {
+      font-size: 0.78rem; color: var(--text-3); transition: color 0.15s;
+    }
+    .footer-links a:hover { color: var(--text-2); }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .hero-stat-divider { display: none; }
+      .hero-stats { gap: 1.5rem; }
+      .landing-nav .btn-hero-ghost { display: none; }
+      .steps-grid { grid-template-columns: 1fr; }
+      .footer { flex-direction: column; text-align: center; }
+      .footer-links { justify-content: center; }
+    }
   </style>
 </head>
-<body class="auth-page">
-  <div class="auth-bg-lines"></div>
+<body>
 
-  <div class="auth-card" style="max-width:420px;">
+  <!-- NAV -->
+  <nav class="landing-nav">
+    <div class="nav-brand">
+      <div class="nav-brand-icon">⛽</div>
+      PetroTrack
+    </div>
+    <div class="nav-links">
+      <a href="login.html" class="btn-hero-ghost" style="padding:8px 18px; font-size:0.82rem;">Sign In</a>
+      <a href="index.html" class="btn-hero-primary" style="padding:8px 18px; font-size:0.82rem;">Get Started →</a>
+    </div>
+  </nav>
 
-    <div class="auth-logo" style="margin-bottom:1.75rem;">
-      <div class="auth-logo-icon">⛽</div>
-      <div>
-        <div class="auth-logo-text">PetroTrack</div>
-        <div class="auth-logo-sub">Industrial Command</div>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow">Live Fuel Tracking Network</div>
+
+      <h1 class="hero-title">
+        Find Fuel.<br>
+        <span>Skip the Queue.</span>
+      </h1>
+
+      <p class="hero-sub">
+        PetroTrack shows you real-time fuel availability at stations near you —
+        petrol, diesel, kerosene, and cooking gas — before you leave the house.
+      </p>
+
+      <div class="hero-cta">
+        <a href="index.html" class="btn-hero-primary">Get Started Free →</a>
+        <a href="login.html" class="btn-hero-ghost">Sign In</a>
+      </div>
+
+      <div class="hero-stats">
+        <div>
+          <div class="hero-stat-val" id="liveStations">—</div>
+          <div class="hero-stat-label">Active Stations</div>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div>
+          <div class="hero-stat-val" id="liveUsers">—</div>
+          <div class="hero-stat-label">Registered Users</div>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div>
+          <div class="hero-stat-val">4</div>
+          <div class="hero-stat-label">Fuel Types Tracked</div>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div>
+          <div class="hero-stat-val" style="color:var(--green);">LIVE</div>
+          <div class="hero-stat-label">Real-time Updates</div>
+        </div>
       </div>
     </div>
+  </section>
 
-    <div class="auth-heading">Create account</div>
-    <div class="auth-sub" style="margin-bottom:1.5rem;">Choose your role to get started</div>
-
-    <!-- Role Selector -->
-    <div class="role-selector">
-      <label class="role-card">
-        <input type="radio" name="signupRole" value="customer" checked>
-        <div class="role-label">
-          <div class="role-icon">🚗</div>
-          <div class="role-name">Customer</div>
-          <div class="role-desc">Find fuel stations near you</div>
-        </div>
-      </label>
-      <label class="role-card">
-        <input type="radio" name="signupRole" value="seller">
-        <div class="role-label">
-          <div class="role-icon">⛽</div>
-          <div class="role-name">Seller</div>
-          <div class="role-desc">List &amp; manage your stations</div>
-        </div>
-      </label>
+  <!-- FUEL TYPES -->
+  <section class="fuels">
+    <div class="section-label">What We Track</div>
+    <div class="section-title" style="margin-bottom:2rem;">All Major Fuel Types</div>
+    <div class="fuels-grid">
+      <div class="fuel-type-card">
+        <div class="fuel-type-icon">⛽</div>
+        <div class="fuel-type-name">Petrol</div>
+        <div class="fuel-type-abbr">PMS</div>
+      </div>
+      <div class="fuel-type-card">
+        <div class="fuel-type-icon">🛢</div>
+        <div class="fuel-type-name">Diesel</div>
+        <div class="fuel-type-abbr">AGO</div>
+      </div>
+      <div class="fuel-type-card">
+        <div class="fuel-type-icon">🔥</div>
+        <div class="fuel-type-name">Kerosene</div>
+        <div class="fuel-type-abbr">DPK</div>
+      </div>
+      <div class="fuel-type-card">
+        <div class="fuel-type-icon">🫙</div>
+        <div class="fuel-type-name">Cooking Gas</div>
+        <div class="fuel-type-abbr">LPG</div>
+      </div>
     </div>
+  </section>
 
-    <!-- Hidden select for app.js compatibility -->
-    <select id="role" style="display:none;">
-      <option value="customer">Customer</option>
-      <option value="seller">Seller</option>
-    </select>
-
-    <div class="error-msg"   id="signupError"></div>
-    <div class="success-msg" id="signupSuccess"></div>
-
-    <div class="form-group">
-      <label class="form-label">Email address</label>
-      <input type="email" id="email" placeholder="you@example.com">
+  <!-- FEATURES -->
+  <section class="features">
+    <div class="section-label">Features</div>
+    <div class="section-title">Everything You Need</div>
+    <div class="section-sub">Built specifically for the Nigerian fuel market</div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon" style="background:var(--accent-glow); border-color:rgba(59,111,245,0.25);">🗺</div>
+        <div class="feature-title">Live Station Map</div>
+        <div class="feature-desc">See approved fuel stations and their current availability status in real time.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:var(--green-dim); border-color:rgba(34,197,94,0.25);">📍</div>
+        <div class="feature-title">Get Directions</div>
+        <div class="feature-desc">One tap opens Google Maps with turn-by-turn directions straight to the station.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:var(--amber-dim); border-color:rgba(245,166,35,0.25);">💰</div>
+        <div class="feature-title">Price Tracking</div>
+        <div class="feature-desc">See current pump prices before you go. Filter stations by maximum price.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.2);">🔔</div>
+        <div class="feature-title">Instant Notifications</div>
+        <div class="feature-desc">Get alerts for national fuel price updates and availability changes near you.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(139,92,246,0.1); border-color:rgba(139,92,246,0.2);">🚩</div>
+        <div class="feature-title">Report Incorrect Info</div>
+        <div class="feature-desc">Spot wrong fuel status? Report it in seconds. Our team reviews and corrects it fast.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:var(--accent-glow); border-color:rgba(59,111,245,0.25);">⚡</div>
+        <div class="feature-title">Real-time Updates</div>
+        <div class="feature-desc">Station owners update availability live. What you see is always current.</div>
+      </div>
     </div>
+  </section>
 
-    <div class="form-group" style="margin-bottom:18px;">
-      <label class="form-label">Password</label>
-      <input type="password" id="password" placeholder="Minimum 6 characters"
-             onkeydown="if(event.key==='Enter') styledSignUp()">
+  <!-- HOW IT WORKS -->
+  <section class="how-it-works">
+    <div class="section-label">How It Works</div>
+    <div class="section-title">Simple. Fast. Reliable.</div>
+    <div class="section-sub" style="margin-bottom:3rem;">Get started in under a minute</div>
+    <div class="steps-grid">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-icon">📝</div>
+        <div class="step-title">Create Account</div>
+        <div class="step-desc">Sign up free as a customer or station owner. No credit card needed.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-icon">🔍</div>
+        <div class="step-title">Search Stations</div>
+        <div class="step-desc">Find stations near you filtered by fuel type and price.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-icon">🗺</div>
+        <div class="step-title">Get Directions</div>
+        <div class="step-desc">Tap Get Directions and go straight to a station with fuel available.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-icon">⛽</div>
+        <div class="step-title">Fill Up</div>
+        <div class="step-desc">No more wasted trips. Arrive knowing fuel is available.</div>
+      </div>
     </div>
+  </section>
 
-    <button onclick="styledSignUp()" class="btn btn-primary"
-            style="width:100%; justify-content:center; padding:11px; font-size:0.88rem;"
-            id="signupBtn">
-      Create Account →
-    </button>
-
-    <div class="auth-footer" style="margin-top:16px;">
-      Already have an account? <a href="login.html">Sign In</a>
+  <!-- ROLES -->
+  <section class="roles">
+    <div class="section-label">Who It's For</div>
+    <div class="section-title">Built for Everyone</div>
+    <div class="section-sub" style="margin-bottom:3rem;">Three roles, one platform</div>
+    <div class="roles-grid">
+      <div class="role-feature-card customer">
+        <div class="role-big-icon">🚗</div>
+        <div class="role-feature-title">Customers</div>
+        <div class="role-feature-desc">Find fuel fast without driving around guessing.</div>
+        <ul class="role-feature-list">
+          <li>Live availability across stations</li>
+          <li>Filter by fuel type and price</li>
+          <li>One-tap directions</li>
+          <li>Report incorrect station info</li>
+          <li>Price update notifications</li>
+        </ul>
+      </div>
+      <div class="role-feature-card seller">
+        <div class="role-big-icon">⛽</div>
+        <div class="role-feature-title">Station Owners</div>
+        <div class="role-feature-desc">List your station and attract customers actively looking for fuel.</div>
+        <ul class="role-feature-list">
+          <li>Register multiple stations</li>
+          <li>Update fuel availability live</li>
+          <li>Set and update prices</li>
+          <li>View customer reports</li>
+          <li>Reach verified customers</li>
+        </ul>
+      </div>
+      <div class="role-feature-card admin">
+        <div class="role-big-icon">🖥</div>
+        <div class="role-feature-title">Administrators</div>
+        <div class="role-feature-desc">Keep the network clean, accurate and operational.</div>
+        <ul class="role-feature-list">
+          <li>Approve and verify stations</li>
+          <li>Manage all users and roles</li>
+          <li>Review and resolve reports</li>
+          <li>Broadcast price updates</li>
+          <li>Full network oversight</li>
+        </ul>
+      </div>
     </div>
+  </section>
 
-  </div>
+  <!-- CTA BANNER -->
+  <section class="cta-banner">
+    <h2 class="cta-title">Ready to Find Fuel Faster?</h2>
+    <p class="cta-sub">Join PetroTrack today. Free for customers, free for station owners.</p>
+    <div class="cta-buttons">
+      <a href="index.html" class="btn-hero-primary">Create Free Account →</a>
+      <a href="login.html" class="btn-hero-ghost">Sign In</a>
+    </div>
+  </section>
 
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-brand">
+      <div class="nav-brand-icon" style="width:24px;height:24px;font-size:0.75rem;">⛽</div>
+      PetroTrack
+    </div>
+    <div class="footer-copy">© 2026 PetroTrack. Built for Nigeria.</div>
+    <div class="footer-links">
+      <a href="login.html">Sign In</a>
+      <a href="index.html">Sign Up</a>
+      <a href="admin-login.html">Admin</a>
+    </div>
+  </footer>
+
+  <!-- Load live stats from Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
-    // Sync radio to hidden select
-    document.querySelectorAll('input[name="signupRole"]').forEach(r => {
-      r.addEventListener("change", () => {
-        document.getElementById("role").value = r.value;
-      });
-    });
+    const SUPABASE_URL = "https://jvjognshdiyidvhhzlbd.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_GLP0p0tvCCAnG-aNru4RPw_Ng5_4Qnd";
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    window.styledSignUp = async function () {
-      const email    = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-      const role     = document.getElementById("role").value;
-      const errEl    = document.getElementById("signupError");
-      const okEl     = document.getElementById("signupSuccess");
-      const btn      = document.getElementById("signupBtn");
-
-      errEl.classList.remove("show");
-      okEl.classList.remove("show");
-
-      if (!email || !password) {
-        errEl.textContent = "Please fill in all fields.";
-        errEl.classList.add("show"); return;
-      }
-
-      if (password.length < 6) {
-        errEl.textContent = "Password must be at least 6 characters.";
-        errEl.classList.add("show"); return;
-      }
-
-      btn.textContent = "Creating account…"; btn.disabled = true;
-
+    (async () => {
       try {
-        const { data, error } = await supabaseClient.auth.signUp({ email, password });
-        if (error) throw error;
-
-        const { error: insertError } = await supabaseClient.from("users").insert([{
-          id: data.user.id, email, role
-        }]);
-
-        if (insertError) throw insertError;
-
-        okEl.textContent = "Account created! Check your email to confirm, then sign in.";
-        okEl.classList.add("show");
-        btn.textContent = "Account Created ✓"; btn.disabled = true;
-
-      } catch (err) {
-        errEl.textContent = err.message;
-        errEl.classList.add("show");
-        btn.textContent = "Create Account →"; btn.disabled = false;
-      }
-    };
+        const [{ count: sc }, { count: uc }] = await Promise.all([
+          sb.from("stations").select("*", { count:"exact", head:true }).eq("status","approved"),
+          sb.from("users").select("*",    { count:"exact", head:true })
+        ]);
+        const sEl = document.getElementById("liveStations");
+        const uEl = document.getElementById("liveUsers");
+        if (sEl) sEl.textContent = sc ?? "—";
+        if (uEl) uEl.textContent = uc ?? "—";
+      } catch(e) { console.log(e); }
+    })();
   </script>
 </body>
 </html>
