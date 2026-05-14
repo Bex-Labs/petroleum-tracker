@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics | PetroTrack</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer src="app.js"></script>
+  <style>
+    /* Bar chart */
+    .bar-chart { display:flex; flex-direction:column; gap:10px; }
+    .bar-row { display:flex; align-items:center; gap:12px; }
+    .bar-label { font-size:0.75rem; color:var(--text-2); width:110px; flex-shrink:0; text-align:right; }
+    .bar-track { flex:1; background:var(--bg-input); border-radius:999px; height:10px; overflow:hidden; }
+    .bar-fill { height:100%; border-radius:999px; transition:width 0.6s ease; }
+    .bar-val { font-size:0.75rem; font-weight:700; color:var(--text-1); width:30px; flex-shrink:0; }
+
+    /* Fuel availability grid */
+    .avail-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+    .avail-card {
+      background:var(--bg-surface); border:1px solid var(--border);
+      border-radius:var(--r-md); padding:14px 16px;
+      display:flex; align-items:center; gap:12px;
+    }
+    .avail-icon { font-size:1.5rem; }
+    .avail-val  { font-family:var(--font-display); font-size:1.4rem; font-weight:700; color:var(--text-1); }
+    .avail-label{ font-size:0.7rem; color:var(--text-3); text-transform:uppercase; letter-spacing:0.07em; }
+    .avail-pct  { font-size:0.75rem; color:var(--green); font-weight:600; margin-top:2px; }
+
+    /* Mini donut using conic-gradient */
+    .donut {
+      width:80px; height:80px; border-radius:50%;
+      flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      position:relative;
+    }
+    .donut-label {
+      font-family:var(--font-display); font-size:1rem; font-weight:700;
+      color:var(--text-1); position:relative; z-index:1;
+    }
+  </style>
+  <script>
+    document.addEventListener("DOMContentLoaded", async function () {
+      checkUser("admin");
+      const user = JSON.parse(localStorage.getItem("currentUser"));
+      if (!user) { window.location.href = "admin-login.html"; return; }
+      document.getElementById("userEmail").textContent = user.email;
+      await loadAnalytics();
+    });
+
+    async function loadAnalytics() {
+      const [
+        { data: stations },
+        { data: users },
+        { data: reports }
+      ] = await Promise.all([
+        supabaseClient.from("stations").select("*"),
+        supabaseClient.from("users").select("*"),
+        supabaseClient.from("reports").select("*")
+      ]);
+
+      const total     = stations?.length || 0;
+      const approved  = stations?.filter(s => s.status === "approved").length || 0;
+      const pending   = stations?.filter(s => s.status === "pending").length  || 0;
+      const rejected  = stations?.filter(s => s.status === "rejected").length || 0;
+
+      const customers = users?.filter(u => u.role === "customer").length || 0;
+      const sellers   = users?.filter(u => u.role === "seller").length   || 0;
+      const admins    = users?.filter(u => u.role === "admin").length    || 0;
+      const flagged   = users?.filter(u => u.flagged).length             || 0;
+
+      const pendingReports  = reports?.filter(r => r.status === "pending").length  || 0;
+      const resolvedReports = reports?.filter(r => r.status === "resolved").length || 0;
+
+      // Fuel availability across approved stations
+      const ap = stations?.filter(s => s.status === "approved") || [];
+      const fuelStats = {
+        petrol:   ap.filter(s => s.petrol).length,
+        diesel:   ap.filter(s => s.diesel).length,
+        kerosene: ap.filter(s => s.kerosene).length,
+        lpg:      ap.filter(s => s.lpg).length
+      };
+
+      // ── Stat cards ──
+      document.getElementById("statTotal").textContent    = total;
+      document.getElementById("statApproved").textContent = approved;
+      document.getElementById("statPending").textContent  = pending;
+      document.getElementById("statRejected").textContent = rejected;
+      document.getElementById("statUsers").textContent    = users?.length || 0;
+      document.getElementById("statReports").textContent  = reports?.length || 0;
+      document.getElementById("statFlagged").textContent  = flagged;
+
+      // ── Station status bar chart ──
+      const maxS = Math.max(approved, pending, rejected, 1);
+      document.getElementById("barApproved").style.width = (approved/maxS*100) + "%";
+      document.getElementById("barPending").style.width  = (pending/maxS*100)  + "%";
+      document.getElementById("barRejected").style.width = (rejected/maxS*100) + "%";
+      document.getElementById("barApprovedVal").textContent = approved;
+      document.getElementById("barPendingVal").textContent  = pending;
+      document.getElementById("barRejectedVal").textContent = rejected;
+
+      // ── User role bar chart ──
+      const maxU = Math.max(customers, sellers, admins, 1);
+      document.getElementById("barCustomers").style.width = (customers/maxU*100) + "%";
+      document.getElementById("barSellers").style.width   = (sellers/maxU*100)   + "%";
+      document.getElementById("barAdmins").style.width    = (admins/maxU*100)    + "%";
+      document.getElementById("barCustomersVal").textContent = customers;
+      document.getElementById("barSellersVal").textContent   = sellers;
+      document.getElementById("barAdminsVal").textContent    = admins;
+
+      // ── Fuel availability ──
+      const pct = n => approved > 0 ? Math.round(n/approved*100) + "%" : "—";
+      document.getElementById("fuelPetrol").textContent   = fuelStats.petrol;
+      document.getElementById("fuelDiesel").textContent   = fuelStats.diesel;
+      document.getElementById("fuelKerosene").textContent = fuelStats.kerosene;
+      document.getElementById("fuelLpg").textContent      = fuelStats.lpg;
+      document.getElementById("pctPetrol").textContent    = pct(fuelStats.petrol)   + " of stations";
+      document.getElementById("pctDiesel").textContent    = pct(fuelStats.diesel)   + " of stations";
+      document.getElementById("pctKerosene").textContent  = pct(fuelStats.kerosene) + " of stations";
+      document.getElementById("pctLpg").textContent       = pct(fuelStats.lpg)      + " of stations";
+
+      // ── Reports donut ──
+      const totalR = pendingReports + resolvedReports || 1;
+      const resolvedPct = Math.round(resolvedReports/totalR*100);
+      document.getElementById("donutEl").style.background =
+        `conic-gradient(var(--green) 0% ${resolvedPct}%, var(--border) ${resolvedPct}% 100%)`;
+      document.getElementById("donutLabel").textContent = resolvedPct + "%";
+      document.getElementById("reportPending").textContent  = pendingReports;
+      document.getElementById("reportResolved").textContent = resolvedReports;
+    }
+  </script>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">⛽</div>
+      <div>
+        <div class="brand-name">PetroTrack</div>
+        <div class="brand-tagline">Industrial Command</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Main</div>
+      <a href="admin.html"     class="nav-link" style="text-decoration:none;"><span class="nav-icon">🖥</span> Dashboard</a>
+      <a href="admin.html"     class="nav-link" style="text-decoration:none;"><span class="nav-icon">👥</span> Users</a>
+      <a href="admin.html"     class="nav-link" style="text-decoration:none;"><span class="nav-icon">⛽</span> Stations</a>
+      <div class="nav-label">Moderation</div>
+      <a href="admin.html"     class="nav-link" style="text-decoration:none;"><span class="nav-icon">🚩</span> Reports</a>
+      <a href="admin.html"     class="nav-link" style="text-decoration:none;"><span class="nav-icon">📢</span> Broadcast</a>
+      <div class="nav-label">System</div>
+      <div class="nav-link active"><span class="nav-icon">📊</span> Analytics</div>
+      <a href="settings.html"  class="nav-link" style="text-decoration:none;"><span class="nav-icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logoutBtn" class="btn btn-logout" style="width:100%;justify-content:center;">↩ Logout</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div>
+          <div class="topbar-title">Analytics</div>
+          <div class="topbar-subtitle">Network overview and statistics</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-badge">Admin</span>
+        <span class="topbar-badge" id="userEmail">—</span>
+      </div>
+    </header>
+
+    <main class="page-body">
+
+      <!-- Top stat cards -->
+      <div class="stats-row" style="grid-template-columns:repeat(4,1fr); margin-bottom:16px;">
+        <div class="stat-card">
+          <div class="stat-label">Total Stations</div>
+          <div class="stat-value" id="statTotal">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Users</div>
+          <div class="stat-value" id="statUsers">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Reports</div>
+          <div class="stat-value" id="statReports">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Flagged Users</div>
+          <div class="stat-value" style="color:var(--amber);" id="statFlagged">—</div>
+        </div>
+      </div>
+
+      <div class="content-grid">
+        <div>
+          <!-- Station Status Chart -->
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-header">
+              <div class="panel-title">Station Status Breakdown</div>
+              <div style="display:flex;gap:8px;">
+                <span class="badge badge-approved" id="statApproved">—</span>
+                <span class="badge badge-pending"  id="statPending">—</span>
+                <span class="badge badge-rejected" id="statRejected">—</span>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="bar-chart">
+                <div class="bar-row">
+                  <div class="bar-label">✅ Approved</div>
+                  <div class="bar-track"><div class="bar-fill" id="barApproved" style="background:var(--green);width:0%;"></div></div>
+                  <div class="bar-val" id="barApprovedVal">0</div>
+                </div>
+                <div class="bar-row">
+                  <div class="bar-label">🕐 Pending</div>
+                  <div class="bar-track"><div class="bar-fill" id="barPending" style="background:var(--amber);width:0%;"></div></div>
+                  <div class="bar-val" id="barPendingVal">0</div>
+                </div>
+                <div class="bar-row">
+                  <div class="bar-label">❌ Rejected</div>
+                  <div class="bar-track"><div class="bar-fill" id="barRejected" style="background:var(--red);width:0%;"></div></div>
+                  <div class="bar-val" id="barRejectedVal">0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- User Role Chart -->
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-header">
+              <div class="panel-title">User Role Breakdown</div>
+            </div>
+            <div class="panel-body">
+              <div class="bar-chart">
+                <div class="bar-row">
+                  <div class="bar-label">🚗 Customers</div>
+                  <div class="bar-track"><div class="bar-fill" id="barCustomers" style="background:var(--accent);width:0%;"></div></div>
+                  <div class="bar-val" id="barCustomersVal">0</div>
+                </div>
+                <div class="bar-row">
+                  <div class="bar-label">⛽ Sellers</div>
+                  <div class="bar-track"><div class="bar-fill" id="barSellers" style="background:var(--amber);width:0%;"></div></div>
+                  <div class="bar-val" id="barSellersVal">0</div>
+                </div>
+                <div class="bar-row">
+                  <div class="bar-label">🖥 Admins</div>
+                  <div class="bar-track"><div class="bar-fill" id="barAdmins" style="background:var(--green);width:0%;"></div></div>
+                  <div class="bar-val" id="barAdminsVal">0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fuel Availability -->
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Fuel Availability</div>
+                <div class="panel-subtitle">Stations currently stocking each fuel type</div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="avail-grid">
+                <div class="avail-card">
+                  <div class="avail-icon">⛽</div>
+                  <div>
+                    <div class="avail-val" id="fuelPetrol">—</div>
+                    <div class="avail-label">Petrol (PMS)</div>
+                    <div class="avail-pct" id="pctPetrol"></div>
+                  </div>
+                </div>
+                <div class="avail-card">
+                  <div class="avail-icon">🛢</div>
+                  <div>
+                    <div class="avail-val" id="fuelDiesel">—</div>
+                    <div class="avail-label">Diesel (AGO)</div>
+                    <div class="avail-pct" id="pctDiesel"></div>
+                  </div>
+                </div>
+                <div class="avail-card">
+                  <div class="avail-icon">🔥</div>
+                  <div>
+                    <div class="avail-val" id="fuelKerosene">—</div>
+                    <div class="avail-label">Kerosene (DPK)</div>
+                    <div class="avail-pct" id="pctKerosene"></div>
+                  </div>
+                </div>
+                <div class="avail-card">
+                  <div class="avail-icon">🫙</div>
+                  <div>
+                    <div class="avail-val" id="fuelLpg">—</div>
+                    <div class="avail-label">LPG / Cooking Gas</div>
+                    <div class="avail-pct" id="pctLpg"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Reports donut -->
+        <div>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Reports Resolution</div>
+            </div>
+            <div class="panel-body" style="display:flex;flex-direction:column;align-items:center;gap:20px;">
+              <!-- Donut chart -->
+              <div class="donut" id="donutEl" style="background:conic-gradient(var(--green) 0% 0%, var(--border) 0% 100%);">
+                <div style="width:54px;height:54px;border-radius:50%;background:var(--bg-card);display:flex;align-items:center;justify-content:center;">
+                  <span class="donut-label" id="donutLabel">0%</span>
+                </div>
+              </div>
+              <div style="font-size:0.72rem;color:var(--text-3);text-align:center;">Reports resolved</div>
+
+              <div style="width:100%;">
+                <div class="bar-row" style="margin-bottom:10px;">
+                  <div class="bar-label" style="width:90px;">🕐 Pending</div>
+                  <div class="bar-val" style="font-size:1.1rem;" id="reportPending">—</div>
+                </div>
+                <div class="bar-row">
+                  <div class="bar-label" style="width:90px;">✅ Resolved</div>
+                  <div class="bar-val" style="font-size:1.1rem;" id="reportResolved">—</div>
+                </div>
+              </div>
+
+              <a href="admin.html" class="btn btn-ghost" style="width:100%;justify-content:center;text-decoration:none;">
+                View All Reports →
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

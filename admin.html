@@ -3,60 +3,231 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard | FuelTracker</title>
-   
- <!-- Supabase (keep if needed elsewhere) -->
+  <title>Admin Dashboard | PetroTrack</title>
+  <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
-  <!-- MAIN APP SCRIPT -->
   <script defer src="app.js"></script>
-
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-
-      // ✅ STEP 1: Protect page
       checkUser("admin");
-
-      // ✅ STEP 2: Get user from localStorage
       const user = JSON.parse(localStorage.getItem("currentUser"));
-
-      if (!user) {
-        window.location.href = "login.html";
-        return;
-      }
-
-      // ✅ STEP 3: Show welcome text
-      const welcome = document.getElementById("welcome");
-      if (welcome) {
-        welcome.innerText = "Welcome " + user.email + " (Admin)";
- 
-        // ✅ ADD THIS LINE
-        loadUsers();
-        loadPendingStations(); 
-        loadAllStations(); // ✅ VERY IMPORTANT
-
-      }
+      if (!user) { window.location.href = "admin-login.html"; return; }
+      document.getElementById("userEmail").textContent = user.email;
+      loadUsers();
+      loadPendingStations();
+      loadAllStations();
+      loadReports();
+      loadNotifications();
     });
   </script>
-
 </head>
-
 <body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">⛽</div>
+      <div>
+        <div class="brand-name">PetroTrack</div>
+        <div class="brand-tagline">Industrial Command</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Main</div>
+      <div class="nav-link active"><span class="nav-icon">🖥</span> Dashboard</div>
+      <div class="nav-link" onclick="document.getElementById('userList').scrollIntoView({behavior:'smooth'})"><span class="nav-icon">👥</span> Users</div>
+      <div class="nav-link" onclick="document.getElementById('allStations').scrollIntoView({behavior:'smooth'})"><span class="nav-icon">⛽</span> Stations</div>
+      <div class="nav-label">Moderation</div>
+      <div class="nav-link" onclick="document.getElementById('reportsList').scrollIntoView({behavior:'smooth'})"><span class="nav-icon">🚩</span> Reports</div>
+      <div class="nav-link" onclick="document.getElementById('stationList').scrollIntoView({behavior:'smooth'})"><span class="nav-icon">📢</span> Broadcast</div>
+      <div class="nav-label">System</div>
+      <a href="analytics.html" class="nav-link" style="text-decoration:none;"><span class="nav-icon">📊</span> Analytics</a>
+      <a href="settings.html"  class="nav-link" style="text-decoration:none;"><span class="nav-icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logoutBtn" class="btn btn-logout" style="width:100%; justify-content:center;">↩ Logout</button>
+    </div>
+  </aside>
 
-  <h1 id="welcome">Admin Dashboard</h1>
-  
-  <h2>All Users</h2>
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div>
+          <div class="topbar-title">Command Center</div>
+          <div class="status-bar">
+            <span class="status-dot"></span>
+            <span>MAINFRAME SYNC: 100%</span>
+            <span>•</span>
+            <span>PRIMARY: ADMIN PANEL</span>
+          </div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-badge">Admin</span>
 
-  <div id="userList"></div>
+        <!-- Notification Bell -->
+        <div class="notif-bell-wrap">
+          <button id="notifBell" class="notif-bell-btn" onclick="toggleNotifPanel()">
+            🔔
+            <span class="notif-badge" id="notifBadge" style="display:none;"></span>
+          </button>
+          <div class="notif-panel" id="notifPanel">
+            <div class="notif-panel-header">
+              <div class="notif-panel-title">Notifications</div>
+              <button onclick="markAllRead()" class="btn btn-ghost btn-sm">Mark all read</button>
+            </div>
+            <div class="notif-list" id="notifList"></div>
+          </div>
+        </div>
 
-  <h2>Pending Stations</h2>
+        <span class="topbar-badge" id="userEmail">—</span>
+      </div>
+    </header>
 
-  <div id="stationList"></div>
-  
-  <h2>Manage Stations</h2>
-  <div id="allStations"></div>
-  <!-- FIXED logout -->
-  <button id="logoutBtn">Logout</button>
+    <main class="page-body">
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Total Users</div>
+          <div class="stat-value" id="statUsers">—</div>
+          <div class="stat-delta">↑ Registered operators</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Stations</div>
+          <div class="stat-value" id="statStations">—</div>
+          <div class="stat-delta">↑ Network nodes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Network Health</div>
+          <div class="stat-value" style="color:var(--green)">99.9%</div>
+          <div class="stat-status"><span class="stat-dot"></span> OPERATIONAL</div>
+        </div>
+      </div>
 
+      <!-- Main grid: Users + Stations | Approval queue -->
+      <div class="content-grid">
+        <div>
+          <!-- User Management -->
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-header">
+              <div class="panel-title">User Management</div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Operator</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="userList">
+                  <tr><td colspan="4"><div class="empty"><div class="empty-icon">👤</div><div class="empty-text">Loading…</div></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Reports Panel -->
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Station Reports</div>
+                <div class="panel-subtitle">User-submitted incorrect info reports</div>
+              </div>
+            </div>
+            <div class="panel-body" id="reportsList">
+              <div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Loading reports…</div></div>
+            </div>
+          </div>
+
+          <!-- All Stations -->
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Manage Stations</div>
+                <div class="panel-subtitle">All registered fuel stations</div>
+              </div>
+            </div>
+            <div class="panel-body" id="allStations">
+              <div class="empty"><div class="empty-icon">⛽</div><div class="empty-text">Loading…</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div>
+          <!-- Approval Queue -->
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-header">
+              <div class="panel-title">Approval Queue</div>
+              <span class="panel-badge amber" id="pendingCount">0 NEW</span>
+            </div>
+            <div class="panel-body" id="stationList">
+              <div class="empty"><div class="empty-icon">🕐</div><div class="empty-text">No pending stations</div></div>
+            </div>
+          </div>
+
+          <!-- Broadcast Notifications -->
+          <div class="panel broadcast-panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">📢 Broadcast Notification</div>
+                <div class="panel-subtitle">Send update to all users</div>
+              </div>
+            </div>
+            <div class="panel-body">
+
+              <!-- Target audience -->
+              <div class="form-group">
+                <label class="form-label">Send To</label>
+                <select id="broadcastTarget" onchange="previewBroadcastTarget()">
+                  <option value="all">👥 All Users (Customers + Sellers)</option>
+                  <option value="customer">🚗 Customers Only</option>
+                  <option value="seller">⛽ Sellers Only</option>
+                </select>
+              </div>
+
+              <!-- Notification type -->
+              <div class="form-group">
+                <label class="form-label">Notification Type</label>
+                <select id="broadcastType">
+                  <option value="price_update">💰 National Fuel Price Update</option>
+                  <option value="announcement">📣 General Announcement</option>
+                  <option value="alert">🚨 Network Alert</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Title</label>
+                <input type="text" id="broadcastTitle" placeholder="e.g. New Petrol Price Effective Today">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Message</label>
+                <textarea id="broadcastMsg" rows="3"
+                  placeholder="e.g. The NNPC has updated the pump price of petrol to ₦1,500/litre effective today."
+                  style="resize:none;"></textarea>
+              </div>
+
+              <!-- Recipient preview -->
+              <div id="broadcastPreview" style="
+                background:var(--bg-input); border:1px solid var(--border);
+                border-radius:var(--r-sm); padding:8px 12px;
+                font-size:0.75rem; color:var(--text-3); margin-bottom:12px; display:none;">
+              </div>
+
+              <button onclick="sendBroadcast()" class="btn btn-primary"
+                style="width:100%; justify-content:center;" id="broadcastBtn">
+                Send Notification →
+              </button>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
 </body>
 </html>

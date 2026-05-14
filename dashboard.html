@@ -3,96 +3,102 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Customer Dashboard | FuelTracker</title>
-  
-
+  <title>Customer Dashboard | PetroTrack</title>
+  <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
   <script defer src="app.js"></script>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      checkUser("customer");
+      const user = JSON.parse(localStorage.getItem("currentUser"));
+      if (!user) { window.location.href = "login.html"; return; }
+      document.getElementById("userEmail").textContent = user.email;
+      loadApprovedStations();
+      loadNotifications();
 
-  // ✅ 1. Protect page
-  checkUser("customer");
-
-  // ✅ 2. Get user
-  const user = JSON.parse(localStorage.getItem("currentUser"));
-
-  if (!user) {
-    window.location.href = "login.html";
-    return;
-  }
-
-  // ✅ 3. Welcome + initial load
-  const welcome = document.getElementById("welcome");
-
-  if (welcome) {
-    welcome.innerText = "Welcome " + user.email + " (Customer)";
-    loadApprovedStations(); 
-  }
-
-  // ✅ GET ALL INPUTS
-  const searchInput = document.getElementById("searchInput");
-  const fuelFilter = document.getElementById("fuelFilter");
-  const priceInput = document.getElementById("maxPrice");
-
-  // ✅ SEARCH
-  if (searchInput) {
-    searchInput.addEventListener("input", function () {
-      const fuel = fuelFilter.value;
-      const price = priceInput.value;
-
-      loadApprovedStations(this.value, fuel, price);
+      document.getElementById("searchInput").addEventListener("input", function () {
+        loadApprovedStations(this.value, document.getElementById("fuelFilter").value, document.getElementById("maxPrice").value);
+      });
+      document.getElementById("fuelFilter").addEventListener("change", function () {
+        loadApprovedStations(document.getElementById("searchInput").value, this.value, document.getElementById("maxPrice").value);
+      });
+      document.getElementById("maxPrice").addEventListener("input", function () {
+        loadApprovedStations(document.getElementById("searchInput").value, document.getElementById("fuelFilter").value, this.value);
+      });
     });
-  }
-
-  // ✅ FUEL FILTER
-  if (fuelFilter) {
-    fuelFilter.addEventListener("change", function () {
-      const search = searchInput.value;
-      const price = priceInput.value;
-
-      loadApprovedStations(search, this.value, price);
-    });
-  }
-
-  // ✅ PRICE FILTER
-  if (priceInput) {
-    priceInput.addEventListener("input", function () {
-      const search = searchInput.value;
-      const fuel = fuelFilter.value;
-
-      loadApprovedStations(search, fuel, this.value);
-    });
-  }
-
-});
-</script>
-
+  </script>
 </head>
-
 <body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">⛽</div>
+      <div>
+        <div class="brand-name">PetroTrack</div>
+        <div class="brand-tagline">Industrial Command</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Main</div>
+      <div class="nav-link active"><span class="nav-icon">🖥</span> Dashboard</div>
+      <div class="nav-link" onclick="document.getElementById('approvedStations').scrollIntoView({behavior:'smooth'})"><span class="nav-icon">⛽</span> Stations</div>
+      <div class="nav-link" onclick="document.getElementById('searchInput').focus()"><span class="nav-icon">🔍</span> Search</div>
+      <div class="nav-label">Tools</div>
+      <a href="settings.html" class="nav-link" style="text-decoration:none;"><span class="nav-icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logoutBtn" class="btn btn-logout" style="width:100%; justify-content:center;">↩ Logout</button>
+    </div>
+  </aside>
 
-  <h1 id="welcome">Customer Dashboard</h1>
-  <h2>Available Petrol Stations</h2>
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div>
+          <div class="topbar-title">Active Stations</div>
+          <div class="topbar-subtitle">Live fuel availability across the network</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="badge badge-active" style="font-size:0.7rem;"><span class="badge-dot"></span> LIVE</span>
 
-  <!-- 🔍 SEARCH INPUT (ADD THIS HERE) -->
-<input type="text" id="searchInput" placeholder="Search by name or location">
+        <!-- Notification Bell -->
+        <div class="notif-bell-wrap">
+          <button id="notifBell" class="notif-bell-btn" onclick="toggleNotifPanel()">
+            🔔
+            <span class="notif-badge" id="notifBadge" style="display:none;"></span>
+          </button>
+          <div class="notif-panel" id="notifPanel">
+            <div class="notif-panel-header">
+              <div class="notif-panel-title">Notifications</div>
+              <button onclick="markAllRead()" class="btn btn-ghost btn-sm">Mark all read</button>
+            </div>
+            <div class="notif-list" id="notifList"></div>
+          </div>
+        </div>
 
-<select id="fuelFilter">
-  <option value="">All Fuel Types</option>
-  <option value="petrol">Petrol Available</option>
-  <option value="diesel">Diesel Available</option>
-  <option value="kerosene">Kerosene Available</option>
-</select>
+        <span class="topbar-badge" id="userEmail">—</span>
+      </div>
+    </header>
 
-<input type="number" id="maxPrice" placeholder="Max petrol price">
-<br><br>
+    <main class="page-body">
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="🔍  Search stations or locations…" style="flex:2;">
+        <select id="fuelFilter">
+          <option value="">⛽ Fuel Type: All</option>
+          <option value="petrol">⛽ Petrol (PMS)</option>
+          <option value="diesel">🛢 Diesel (AGO)</option>
+          <option value="kerosene">🔥 Kerosene (DPK)</option>
+          <option value="lpg">🫙 LPG / Cooking Gas</option>
+        </select>
+        <input type="number" id="maxPrice" placeholder="₦ Max Price">
+      </div>
 
-<div id="approvedStations"></div>
-
-  <!-- Logout button -->
-  <button id="logoutBtn">Logout</button>
-
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px;" id="approvedStations">
+        <div class="empty"><div class="empty-icon">⛽</div><div class="empty-text">Loading stations…</div></div>
+      </div>
+    </main>
+  </div>
+</div>
 </body>
 </html>

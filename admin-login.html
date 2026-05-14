@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Portal | PetroTrack</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer src="app.js"></script>
+  <style>
+    /* ── Admin login specific overrides ── */
+    .admin-auth-page {
+      min-height: 100vh;
+      display: flex;
+      background: #070a10;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Left panel — branding */
+    .admin-left {
+      width: 45%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 3rem;
+      position: relative;
+      border-right: 1px solid #1a2235;
+    }
+
+    /* Animated radar circle */
+    .radar-wrap {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .radar-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(59,111,245,0.15);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation: radarPulse 4s ease-out infinite;
+    }
+
+    .radar-ring:nth-child(2) { animation-delay: 1.3s; }
+    .radar-ring:nth-child(3) { animation-delay: 2.6s; }
+
+    @keyframes radarPulse {
+      0%   { width: 80px; height: 80px; opacity: 0.8; }
+      100% { width: 500px; height: 500px; opacity: 0; }
+    }
+
+    .admin-left-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .admin-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 3rem;
+    }
+
+    .admin-brand-icon {
+      width: 40px; height: 40px;
+      background: var(--accent);
+      border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+    }
+
+    .admin-brand-text {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-1);
+    }
+
+    .admin-brand-sub {
+      font-size: 0.62rem;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .admin-headline {
+      font-family: var(--font-display);
+      font-size: 2.4rem;
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--text-1);
+      margin-bottom: 1rem;
+    }
+
+    .admin-headline span { color: var(--accent); }
+
+    .admin-tagline {
+      font-size: 0.85rem;
+      color: var(--text-3);
+      line-height: 1.7;
+      max-width: 300px;
+    }
+
+    .admin-status-row {
+      display: flex;
+      gap: 20px;
+      margin-top: 3rem;
+    }
+
+    .admin-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .admin-stat-val {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-1);
+    }
+
+    .admin-stat-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-3);
+    }
+
+    .live-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.65rem;
+      color: var(--green);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 3rem;
+    }
+
+    .live-dot::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: blink 1.5s ease infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    /* Right panel — form */
+    .admin-right {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+      background: var(--bg-base);
+    }
+
+    .admin-form-card {
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .admin-form-title {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-1);
+      margin-bottom: 4px;
+    }
+
+    .admin-form-sub {
+      font-size: 0.78rem;
+      color: var(--text-3);
+      margin-bottom: 2rem;
+    }
+
+    /* Restricted badge */
+    .restricted-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #f87171;
+      margin-bottom: 1.75rem;
+    }
+
+    .restricted-badge::before {
+      content: '●';
+      font-size: 0.4rem;
+      animation: blink 1.5s ease infinite;
+    }
+
+    /* Error */
+    .admin-error {
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.2);
+      border-radius: var(--r-sm);
+      color: #f87171;
+      font-size: 0.78rem;
+      padding: 9px 12px;
+      margin-bottom: 14px;
+      display: none;
+    }
+
+    .admin-error.show { display: block; }
+
+    /* Back link */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      color: var(--text-3);
+      margin-top: 20px;
+      cursor: pointer;
+      transition: color 0.15s;
+      text-decoration: none;
+    }
+
+    .back-link:hover { color: var(--text-2); }
+
+    /* Grid background right panel */
+    .admin-right::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.025;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 40px, var(--accent) 40px, var(--accent) 41px),
+        repeating-linear-gradient(90deg, transparent, transparent 40px, var(--accent) 40px, var(--accent) 41px);
+    }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .admin-auth-page { flex-direction: column; }
+      .admin-left { width: 100%; padding: 2rem; border-right: none; border-bottom: 1px solid #1a2235; }
+      .admin-headline { font-size: 1.7rem; }
+      .admin-status-row { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="admin-auth-page">
+
+  <!-- Left — Branding -->
+  <div class="admin-left">
+    <div class="radar-wrap">
+      <div class="radar-ring"></div>
+      <div class="radar-ring"></div>
+      <div class="radar-ring"></div>
+    </div>
+
+    <div class="admin-left-content">
+      <div class="admin-brand">
+        <div class="admin-brand-icon">⛽</div>
+        <div>
+          <div class="admin-brand-text">PetroTrack</div>
+          <div class="admin-brand-sub">Industrial Command</div>
+        </div>
+      </div>
+
+      <h1 class="admin-headline">
+        Command<br>
+        <span>Center</span><br>
+        Portal
+      </h1>
+
+      <p class="admin-tagline">
+        Restricted access for authorized administrators only.
+        All login attempts are logged and monitored.
+      </p>
+
+      <div class="admin-status-row">
+        <div class="admin-stat">
+          <div class="admin-stat-val">99.9%</div>
+          <div class="admin-stat-label">Uptime</div>
+        </div>
+        <div class="admin-stat">
+          <div class="admin-stat-val" id="adminStationCount">—</div>
+          <div class="admin-stat-label">Stations</div>
+        </div>
+        <div class="admin-stat">
+          <div class="admin-stat-val" id="adminUserCount">—</div>
+          <div class="admin-stat-label">Users</div>
+        </div>
+      </div>
+
+      <div class="live-dot">System Operational</div>
+    </div>
+  </div>
+
+  <!-- Right — Form -->
+  <div class="admin-right">
+    <div class="admin-form-card">
+
+      <div class="restricted-badge">Restricted Access</div>
+
+      <div class="admin-form-title">Administrator Login</div>
+      <div class="admin-form-sub">Enter your admin credentials to continue</div>
+
+      <div class="admin-error" id="adminError"></div>
+
+      <div class="form-group">
+        <label class="form-label">Admin Email</label>
+        <input type="email" id="adminEmail" placeholder="admin@petrotrack.com">
+      </div>
+
+      <div class="form-group" style="margin-bottom:20px;">
+        <label class="form-label">Password</label>
+        <input type="password" id="adminPassword" placeholder="••••••••"
+               onkeydown="if(event.key==='Enter') adminLogin()">
+      </div>
+
+      <button onclick="adminLogin()" class="btn btn-primary"
+              style="width:100%; justify-content:center; padding:11px; font-size:0.88rem;"
+              id="adminLoginBtn">
+        Access Command Center →
+      </button>
+
+      <a href="login.html" class="back-link">
+        ← Back to user login
+      </a>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Load public stats for left panel
+  document.addEventListener("DOMContentLoaded", async function () {
+    try {
+      const { count: sc } = await supabaseClient.from("stations").select("*", { count: "exact", head: true });
+      const { count: uc } = await supabaseClient.from("users").select("*",    { count: "exact", head: true });
+      const sEl = document.getElementById("adminStationCount");
+      const uEl = document.getElementById("adminUserCount");
+      if (sEl) sEl.textContent = sc ?? "—";
+      if (uEl) uEl.textContent = uc ?? "—";
+    } catch(e) { /* non-critical */ }
+  });
+
+  window.adminLogin = async function () {
+    const email    = document.getElementById("adminEmail").value.trim();
+    const password = document.getElementById("adminPassword").value;
+    const errEl    = document.getElementById("adminError");
+    const btn      = document.getElementById("adminLoginBtn");
+
+    errEl.classList.remove("show");
+
+    if (!email || !password) {
+      errEl.textContent = "Please enter your email and password.";
+      errEl.classList.add("show"); return;
+    }
+
+    btn.textContent = "Verifying credentials…"; btn.disabled = true;
+
+    try {
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+
+      const { data: userData, error: roleError } = await supabaseClient
+        .from("users").select("*").eq("id", data.user.id).single();
+      if (roleError) throw roleError;
+
+      // Strict admin-only guard
+      if (userData.role !== "admin") {
+        await supabaseClient.auth.signOut();
+        throw new Error("Access denied. This portal is for administrators only.");
+      }
+
+      if (userData.active === false) {
+        throw new Error("This admin account has been deactivated.");
+      }
+
+      localStorage.setItem("currentUser", JSON.stringify({
+        id: data.user.id,
+        email: data.user.email,
+        role: "admin",
+        can_update_fuel: userData.can_update_fuel
+      }));
+
+      window.location.href = "admin.html";
+
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.classList.add("show");
+      btn.textContent = "Access Command Center →"; btn.disabled = false;
+    }
+  };
+</script>
+</body>
+</html>

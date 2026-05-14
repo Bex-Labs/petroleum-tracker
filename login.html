@@ -3,37 +3,312 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login | FuelTracker</title>
-
-
+  <title>Sign In | PetroTrack</title>
+  <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script defer src="app.js"></script>
+  <style>
+    /* ── Role Selector ── */
+    .role-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .role-card {
+      position: relative;
+      cursor: pointer;
+    }
+
+    .role-card input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      width: 0; height: 0;
+    }
+
+    .role-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      background: var(--bg-input);
+      cursor: pointer;
+      transition: all 0.18s;
+      user-select: none;
+    }
+
+    .role-label:hover {
+      border-color: var(--border-light);
+      background: var(--bg-surface);
+    }
+
+    .role-card input:checked + .role-label {
+      border-color: var(--accent);
+      background: var(--accent-glow);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+
+    .role-icon {
+      width: 42px; height: 42px;
+      border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      transition: all 0.18s;
+    }
+
+    .role-card input:checked + .role-label .role-icon {
+      background: var(--accent-glow);
+      border-color: rgba(59,111,245,0.4);
+    }
+
+    .role-name {
+      font-size: 0.8rem;
+      font-weight: 700;
+      font-family: var(--font-display);
+      color: var(--text-2);
+      transition: color 0.18s;
+    }
+
+    .role-card input:checked + .role-label .role-name {
+      color: var(--accent);
+    }
+
+    .role-desc {
+      font-size: 0.65rem;
+      color: var(--text-3);
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    /* ── Checkmark on selected ── */
+    .role-label::after {
+      content: '';
+      position: absolute;
+      top: 8px; right: 8px;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      transition: all 0.18s;
+    }
+
+    .role-card input:checked + .role-label::after {
+      background: var(--accent);
+      border-color: var(--accent);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath d='M1.5 4L3.5 6L6.5 2' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    /* ── Admin link at bottom ── */
+    .admin-portal-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px dashed var(--border);
+      border-radius: var(--r-md);
+      font-size: 0.75rem;
+      color: var(--text-3);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+    }
+
+    .admin-portal-link:hover {
+      border-color: var(--text-3);
+      color: var(--text-2);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .admin-portal-link .lock-icon {
+      font-size: 0.8rem;
+      opacity: 0.6;
+    }
+
+    /* ── Animated background lines ── */
+    .auth-page {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-bg-lines {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.04;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 60px, var(--accent) 60px, var(--accent) 61px),
+        repeating-linear-gradient(90deg, transparent, transparent 60px, var(--accent) 60px, var(--accent) 61px);
+    }
+
+    .auth-card { position: relative; z-index: 1; }
+
+    /* ── Error message ── */
+    .error-msg {
+      background: var(--red-dim);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: var(--r-sm);
+      color: #f87171;
+      font-size: 0.78rem;
+      padding: 9px 12px;
+      margin-bottom: 14px;
+      display: none;
+    }
+
+    .error-msg.show { display: block; }
+
+    /* ── Divider ── */
+    .or-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 18px 0;
+      font-size: 0.7rem;
+      color: var(--text-3);
+    }
+
+    .or-divider::before, .or-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+  </style>
+</head>
+<body class="auth-page">
+  <div class="auth-bg-lines"></div>
+
+  <div class="auth-card" style="max-width:420px;">
+
+    <!-- Brand -->
+    <div class="auth-logo" style="margin-bottom:1.75rem;">
+      <div class="auth-logo-icon">⛽</div>
+      <div>
+        <div class="auth-logo-text">PetroTrack</div>
+        <div class="auth-logo-sub">Industrial Command</div>
+      </div>
+    </div>
+
+    <div class="auth-heading">Welcome back</div>
+    <div class="auth-sub" style="margin-bottom:1.5rem;">Select your role and sign in</div>
+
+    <!-- Role Selector -->
+    <div class="role-selector">
+      <label class="role-card">
+        <input type="radio" name="loginRole" value="customer" checked>
+        <div class="role-label">
+          <div class="role-icon">🚗</div>
+          <div class="role-name">Customer</div>
+          <div class="role-desc">Find fuel stations near you</div>
+        </div>
+      </label>
+
+      <label class="role-card">
+        <input type="radio" name="loginRole" value="seller">
+        <div class="role-label">
+          <div class="role-icon">⛽</div>
+          <div class="role-name">Seller</div>
+          <div class="role-desc">Manage your station & fuel stock</div>
+        </div>
+      </label>
+    </div>
+
+    <!-- Error -->
+    <div class="error-msg" id="loginError"></div>
+
+    <!-- Form -->
+    <div class="form-group">
+      <label class="form-label">Email address</label>
+      <input type="email" id="loginEmail" placeholder="you@example.com">
+    </div>
+
+    <div class="form-group" style="margin-bottom:18px;">
+      <label class="form-label">Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••"
+             onkeydown="if(event.key==='Enter') styledLogin()">
+    </div>
+
+    <button onclick="styledLogin()" class="btn btn-primary"
+            style="width:100%; justify-content:center; padding:11px; font-size:0.88rem;">
+      Sign In →
+    </button>
+
+    <div class="or-divider">or</div>
+
+    <div class="auth-footer" style="margin-top:0;">
+      Don't have an account? <a href="index.html">Create one</a>
+    </div>
+
+    <!-- Admin portal link -->
+    <a href="admin-login.html" class="admin-portal-link">
+      <span class="lock-icon">🔐</span>
+      Admin Portal — Restricted Access
+    </a>
+
+  </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-     const user = JSON.parse(localStorage.getItem("currentUser"));
+    window.styledLogin = async function () {
+      const email    = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      const role     = document.querySelector('input[name="loginRole"]:checked').value;
+      const errEl    = document.getElementById("loginError");
 
-  if (user) {
-    // Ask user what to do instead of forcing redirect
-    console.log("User already logged in:", user);
-  }
-});
+      errEl.classList.remove("show");
+
+      if (!email || !password) {
+        errEl.textContent = "Please enter your email and password.";
+        errEl.classList.add("show"); return;
+      }
+
+      const btn = document.querySelector('.btn-primary');
+      btn.textContent = "Signing in…"; btn.disabled = true;
+
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+
+        const { data: userData, error: roleError } = await supabaseClient
+          .from("users").select("*").eq("id", data.user.id).single();
+        if (roleError) throw roleError;
+
+        if (userData.active === false) {
+          throw new Error("Your account has been deactivated. Contact admin.");
+        }
+
+        // Role mismatch guard
+        if (userData.role === "admin") {
+          throw new Error("Admin accounts must use the Admin Portal.");
+        }
+
+        if (userData.role !== role) {
+          throw new Error(`This account is registered as a ${userData.role}, not a ${role}. Please select the correct role.`);
+        }
+
+        localStorage.setItem("currentUser", JSON.stringify({
+          id: data.user.id,
+          email: data.user.email,
+          role: userData.role,
+          can_update_fuel: userData.can_update_fuel
+        }));
+
+        window.location.href = userData.role === "seller" ? "seller.html" : "dashboard.html";
+
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.classList.add("show");
+        btn.textContent = "Sign In →"; btn.disabled = false;
+      }
+    };
   </script>
-
-</head>
-
-<body>
-
-  <h2>Login</h2>
-
-  <input type="email" id="loginEmail" placeholder="Enter email">
-  <br><br>
-
-  <input type="password" id="loginPassword" placeholder="Enter password">
-  <br><br>
-
-  <!-- Better: bind in JS but keeping your structure -->
-  <button onclick="login()">Login</button>
-
 </body>
 </html>

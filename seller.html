@@ -3,138 +3,256 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Seller Dashboard | FuelTracker</title>
- 
-  <!-- Supabase (keep if you are using it elsewhere) -->
+  <title>Stations Dashboard | PetroTrack</title>
+  <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script defer src="app.js"></script>
-   <script>
-
-   document.addEventListener("DOMContentLoaded", function () {
-
-      // ✅ STEP 1: Wait for auth check
-      if (typeof checkUser === "function") {
-        checkUser("seller");
-      } else {
-        console.error("checkUser is not defined. Check app.js loading.");
-        window.location.href = "login.html";
-        return;
-      }
-
-      // ✅ STEP 2: Get user safely
-      let user;
-
-      if (typeof getUserDetails === "function") {
-        user =  getUserDetails();
-      } else {
-        // fallback (IMPORTANT FIX)
-        user = JSON.parse(localStorage.getItem("currentUser"));
-      }
-
-      if (!user) {
-        window.location.href = "login.html";
-        return;
-      }
-
-      if (user.role !== "seller") {
-        alert("Access denied");
-        window.location.href = "login.html";
-        return;
-      }
-
-      // ✅ STEP 3: Show welcome message safely
-      const welcomeEl = document.getElementById("welcome");
-      if (welcomeEl) {
-        welcomeEl.innerText = "Welcome " + user.email + " (Seller)";
-      }
-      // ✅ ADD THIS
+  <script>
+    document.addEventListener("DOMContentLoaded", async function () {
+      if (typeof checkUser === "function") checkUser("seller");
+      let user = typeof getUserDetails === "function" ? await getUserDetails() : JSON.parse(localStorage.getItem("currentUser"));
+      if (!user || user.role !== "seller") { alert("Access denied"); window.location.href = "login.html"; return; }
+      document.getElementById("userEmail").textContent = user.email;
       loadMyStations();
-      loadSellerStations(); // ✅ ADD THIS
+      loadSellerStations();
+      loadNotifications();
+      loadReports(); // load reports filtered to this seller's stations
     });
-
-    </script>
+  </script>
 </head>
-
 <body>
+<div class="app-layout">
 
-  <h1 id="welcome">Seller Dashboard</h1>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">⛽</div>
+      <div>
+        <div class="brand-name">PetroTrack</div>
+        <div class="brand-tagline">Industrial Command</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Main</div>
+      <div class="nav-link active"><span class="nav-icon">🖥</span> Dashboard</div>
+      <div class="nav-link" onclick="document.getElementById('myStations').scrollIntoView({behavior:'smooth'})"><span class="nav-icon">⛽</span> My Stations</div>
+      <div class="nav-link" onclick="document.getElementById('reportsList').scrollIntoView({behavior:'smooth'})"><span class="nav-icon">🚩</span> Reports</div>
+      <div class="nav-label">Tools</div>
+      <a href="settings.html" class="nav-link" style="text-decoration:none;"><span class="nav-icon">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logoutBtn" class="btn btn-logout" style="width:100%; justify-content:center;">
+        ↩ Logout
+      </button>
+    </div>
+  </aside>
 
-  <h2>My Stations</h2>
+  <!-- Main -->
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div>
+          <div class="topbar-title">Stations Dashboard</div>
+          <div class="topbar-subtitle">Real-time status monitor and inventory management</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="badge badge-active"><span class="badge-dot"></span> Network: Secure</span>
 
- <div id="myStations"></div>
+        <!-- Notification Bell -->
+        <div class="notif-bell-wrap">
+          <button id="notifBell" class="notif-bell-btn" onclick="toggleNotifPanel()">
+            🔔
+            <span class="notif-badge" id="notifBadge" style="display:none;"></span>
+          </button>
+          <div class="notif-panel" id="notifPanel">
+            <div class="notif-panel-header">
+              <div class="notif-panel-title">Notifications</div>
+              <button onclick="markAllRead()" class="btn btn-ghost btn-sm">Mark all read</button>
+            </div>
+            <div class="notif-list" id="notifList"></div>
+          </div>
+        </div>
 
-  <h2>Add Petrol Station</h2>
+        <span class="topbar-badge" id="userEmail">—</span>
+      </div>
+    </header>
 
-<input type="text" id="stationName" placeholder="Station Name"><br><br>
+    <main class="page-body">
+      <div class="content-grid">
 
-<input type="text" id="stationLocation" placeholder="Location"><br><br>
+        <!-- Left: My Stations -->
+        <div>
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">My Stations</div>
+              </div>
+              <span class="panel-badge" id="stationCount">TOTAL: 0 ACTIVE</span>
+            </div>
+            <div class="panel-body">
+              <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px;" id="myStations">
+                <div class="empty"><div class="empty-icon">⛽</div><div class="empty-text">Loading stations…</div></div>
+              </div>
+            </div>
+          </div>
 
-<!-- ✅ ADD THIS BLOCK -->
-<label>Latitude:</label>
-<input type="number" id="lat" step="any" placeholder="e.g. 9.0765">
-<br><br>
+          <!-- Reports on My Stations -->
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-header">
+              <div>
+                <div class="panel-title">Reports on My Stations</div>
+                <div class="panel-subtitle">Customer-submitted issues for your stations</div>
+              </div>
+            </div>
+            <div class="panel-body" id="reportsList">
+              <div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Loading reports…</div></div>
+            </div>
+          </div>
 
-<label>Longitude:</label>
-<input type="number" id="lng" step="any" placeholder="e.g. 7.3986">
-<br><br>
-<!-- ✅ END -->
- 
-<input type="file" id="stationImage"><br><br>
+          <!-- Add New Station -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Add New Station</div>
+            </div>
+            <div class="panel-body">
+              <div class="form-group">
+                <label class="form-label">Station Identifier Name</label>
+                <input type="text" id="stationName" placeholder="e.g. South Corridor Terminal">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Geographic Location</label>
+                <input type="text" id="stationLocation" placeholder="Enter location or address">
+              </div>
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label">Latitude</label>
+                  <input type="number" id="lat" step="any" placeholder="e.g. 9.0765">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Longitude</label>
+                  <input type="number" id="lng" step="any" placeholder="e.g. 7.3986">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Image Upload</label>
+                <input type="file" id="stationImage" accept="image/*">
+              </div>
+              <button onclick="addStation()" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:4px;">
+                + Submit Station
+              </button>
+            </div>
+          </div>
+        </div>
 
-<button onclick="addStation()">Submit Station</button>
+        <!-- Right: Update Fuel Availability -->
+        <div>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Update Availability</div>
+            </div>
+            <div class="panel-body">
+              <div class="form-group">
+                <label class="form-label">Select Station</label>
+                <select id="stationSelect"></select>
+              </div>
 
-<h2>Update Fuel Availability</h2>
+              <div class="divider"></div>
 
-<select id="stationSelect"></select>
+              <!-- Petrol -->
+              <div class="fuel-toggle-row">
+                <div class="fuel-toggle-label">
+                  <div class="fuel-icon">⛽</div>
+                  Petrol (95 Octane)
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="petrolToggle" onchange="syncToggle('petrol', this.checked)">
+                  <div class="toggle-track"></div>
+                </label>
+              </div>
+              <!-- hidden selects kept for app.js compatibility -->
+              <select id="petrol" style="display:none;"><option value="true">Available</option><option value="false">Not Available</option></select>
 
-<br><br>
+              <!-- Diesel -->
+              <div class="fuel-toggle-row">
+                <div class="fuel-toggle-label">
+                  <div class="fuel-icon">🛢</div>
+                  Diesel
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="dieselToggle" onchange="syncToggle('diesel', this.checked)">
+                  <div class="toggle-track"></div>
+                </label>
+              </div>
+              <select id="diesel" style="display:none;"><option value="true">Available</option><option value="false">Not Available</option></select>
 
-<label>Petrol:</label>
-<select id="petrol">
-  <option value="true">Available</option>
-  <option value="false">Not Available</option>
-</select>
+              <!-- Kerosene -->
+              <div class="fuel-toggle-row">
+                <div class="fuel-toggle-label">
+                  <div class="fuel-icon">🔥</div>
+                  Kerosene (DPK)
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="keroseneToggle" onchange="syncToggle('kerosene', this.checked)">
+                  <div class="toggle-track"></div>
+                </label>
+              </div>
+              <select id="kerosene" style="display:none;"><option value="true">Available</option><option value="false">Not Available</option></select>
 
-<br>
+              <!-- LPG / Cooking Gas -->
+              <div class="fuel-toggle-row">
+                <div class="fuel-toggle-label">
+                  <div class="fuel-icon">🫙</div>
+                  LPG / Cooking Gas
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="lpgToggle" onchange="syncToggle('lpg', this.checked)">
+                  <div class="toggle-track"></div>
+                </label>
+              </div>
+              <select id="lpg" style="display:none;"><option value="true">Available</option><option value="false">Not Available</option></select>
 
-<!-- NEW: Petrol Price -->
-<label>Petrol Price:</label>
-<input type="number" id="petrolPrice" placeholder="Enter petrol price">
+              <div class="divider"></div>
 
-<br><br>
+              <div style="font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-3); margin-bottom:10px;">
+                Set Current Prices (₦/L or ₦/kg)
+              </div>
+              <div class="price-inputs" style="grid-template-columns: repeat(2, 1fr);">
+                <div class="price-input-group">
+                  <label class="price-input-label">Petrol</label>
+                  <input type="number" id="petrolPrice" placeholder="0.00">
+                </div>
+                <div class="price-input-group">
+                  <label class="price-input-label">Diesel</label>
+                  <input type="number" id="dieselPrice" placeholder="0.00">
+                </div>
+                <div class="price-input-group">
+                  <label class="price-input-label">Kerosene</label>
+                  <input type="number" id="kerosenePrice" placeholder="0.00">
+                </div>
+                <div class="price-input-group">
+                  <label class="price-input-label">LPG (₦/kg)</label>
+                  <input type="number" id="lpgPrice" placeholder="0.00">
+                </div>
+              </div>
 
-<label>Diesel:</label>
-<select id="diesel">
-  <option value="true">Available</option>
-  <option value="false">Not Available</option>
-</select>
+              <button onclick="updateFuel()" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:16px;">
+                Apply Price Updates
+              </button>
+            </div>
+          </div>
+        </div>
 
-<br>
+      </div>
+    </main>
+  </div>
+</div>
 
-<!-- NEW: Diesel Price -->
-<label>Diesel Price:</label>
-<input type="number" id="dieselPrice" placeholder="Enter diesel price">
-
-<br><br>
-
-<label>Kerosene:</label>
-<select id="kerosene">
-  <option value="true">Available</option>
-  <option value="false">Not Available</option>
-</select>
-
-<br>
-
-<!-- NEW: Kerosene Price -->
-<label>Kerosene Price:</label>
-<input type="number" id="kerosenePrice" placeholder="Enter kerosene price">
-
-<br><br>
-
-<button onclick="updateFuel()">Update Fuel</button>
-
-<!-- FIXED logout binding -->
-  <button id="logoutBtn">Logout</button>
-
+<script>
+  function syncToggle(fuel, checked) {
+    const sel = document.getElementById(fuel);
+    if (sel) sel.value = checked ? "true" : "false";
+  }
+</script>
 </body>
 </html>

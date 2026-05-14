@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings | PetroTrack</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer src="app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const user = JSON.parse(localStorage.getItem("currentUser"));
+      if (!user) { window.location.href = "login.html"; return; }
+      document.getElementById("userEmail").textContent = user.email;
+      document.getElementById("currentEmail").textContent = user.email;
+      document.getElementById("currentRole").textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+
+      // Set correct back link based on role
+      const backLink = document.getElementById("dashboardLink");
+      if (user.role === "admin")       backLink.href = "admin.html";
+      else if (user.role === "seller") backLink.href = "seller.html";
+      else                              backLink.href = "dashboard.html";
+    });
+
+    async function updatePassword() {
+      const current  = document.getElementById("currentPwd").value;
+      const newPwd   = document.getElementById("newPwd").value;
+      const confirm  = document.getElementById("confirmPwd").value;
+      const errEl    = document.getElementById("pwdError");
+      const okEl     = document.getElementById("pwdSuccess");
+      errEl.style.display = "none"; okEl.style.display = "none";
+
+      if (!current || !newPwd || !confirm) {
+        errEl.textContent = "Please fill in all fields."; errEl.style.display = "block"; return;
+      }
+      if (newPwd.length < 6) {
+        errEl.textContent = "New password must be at least 6 characters."; errEl.style.display = "block"; return;
+      }
+      if (newPwd !== confirm) {
+        errEl.textContent = "New passwords do not match."; errEl.style.display = "block"; return;
+      }
+
+      const btn = document.getElementById("pwdBtn");
+      btn.textContent = "Updating…"; btn.disabled = true;
+
+      const { error } = await supabaseClient.auth.updateUser({ password: newPwd });
+      if (error) {
+        errEl.textContent = error.message; errEl.style.display = "block";
+        btn.textContent = "Update Password"; btn.disabled = false; return;
+      }
+
+      okEl.textContent = "Password updated successfully!"; okEl.style.display = "block";
+      document.getElementById("currentPwd").value = "";
+      document.getElementById("newPwd").value = "";
+      document.getElementById("confirmPwd").value = "";
+      btn.textContent = "Update Password"; btn.disabled = false;
+    }
+
+    async function updateEmail() {
+      const newEmail = document.getElementById("newEmail").value.trim();
+      const errEl    = document.getElementById("emailError");
+      const okEl     = document.getElementById("emailSuccess");
+      errEl.style.display = "none"; okEl.style.display = "none";
+
+      if (!newEmail) {
+        errEl.textContent = "Please enter a new email."; errEl.style.display = "block"; return;
+      }
+
+      const btn = document.getElementById("emailBtn");
+      btn.textContent = "Updating…"; btn.disabled = true;
+
+      const { error } = await supabaseClient.auth.updateUser({ email: newEmail });
+      if (error) {
+        errEl.textContent = error.message; errEl.style.display = "block";
+        btn.textContent = "Update Email"; btn.disabled = false; return;
+      }
+
+      okEl.textContent = "Confirmation sent to " + newEmail + ". Check your inbox.";
+      okEl.style.display = "block";
+      btn.textContent = "Update Email"; btn.disabled = false;
+    }
+  </script>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">⛽</div>
+      <div>
+        <div class="brand-name">PetroTrack</div>
+        <div class="brand-tagline">Industrial Command</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Main</div>
+      <a id="dashboardLink" href="dashboard.html" class="nav-link"><span class="nav-icon">🖥</span> Dashboard</a>
+      <div class="nav-label">Account</div>
+      <div class="nav-link active"><span class="nav-icon">⚙️</span> Settings</div>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logoutBtn" class="btn btn-logout" style="width:100%;justify-content:center;">↩ Logout</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div>
+          <div class="topbar-title">Account Settings</div>
+          <div class="topbar-subtitle">Manage your account credentials</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-badge" id="userEmail">—</span>
+      </div>
+    </header>
+
+    <main class="page-body" style="max-width:680px;">
+
+      <!-- Account Info -->
+      <div class="panel" style="margin-bottom:16px;">
+        <div class="panel-header">
+          <div class="panel-title">Account Info</div>
+        </div>
+        <div class="panel-body">
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
+              <span style="font-size:0.78rem; color:var(--text-3); text-transform:uppercase; letter-spacing:0.07em; font-weight:600;">Email</span>
+              <span style="font-size:0.88rem; color:var(--text-1); font-weight:500;" id="currentEmail">—</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0;">
+              <span style="font-size:0.78rem; color:var(--text-3); text-transform:uppercase; letter-spacing:0.07em; font-weight:600;">Role</span>
+              <span id="currentRole" class="badge badge-active" style="font-size:0.72rem;">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Change Password -->
+      <div class="panel" style="margin-bottom:16px;">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Change Password</div>
+            <div class="panel-subtitle">Use a strong password of at least 6 characters</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div id="pwdError" style="background:var(--red-dim);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r-sm);color:#f87171;font-size:0.78rem;padding:9px 12px;margin-bottom:12px;display:none;"></div>
+          <div id="pwdSuccess" style="background:var(--green-dim);border:1px solid rgba(34,197,94,0.25);border-radius:var(--r-sm);color:var(--green);font-size:0.78rem;padding:9px 12px;margin-bottom:12px;display:none;"></div>
+
+          <div class="form-group">
+            <label class="form-label">Current Password</label>
+            <input type="password" id="currentPwd" placeholder="••••••••">
+          </div>
+          <div class="form-group">
+            <label class="form-label">New Password</label>
+            <input type="password" id="newPwd" placeholder="••••••••">
+          </div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label">Confirm New Password</label>
+            <input type="password" id="confirmPwd" placeholder="••••••••">
+          </div>
+          <button id="pwdBtn" onclick="updatePassword()" class="btn btn-primary">
+            Update Password
+          </button>
+        </div>
+      </div>
+
+      <!-- Change Email -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Change Email</div>
+            <div class="panel-subtitle">A confirmation link will be sent to your new email</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div id="emailError" style="background:var(--red-dim);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r-sm);color:#f87171;font-size:0.78rem;padding:9px 12px;margin-bottom:12px;display:none;"></div>
+          <div id="emailSuccess" style="background:var(--green-dim);border:1px solid rgba(34,197,94,0.25);border-radius:var(--r-sm);color:var(--green);font-size:0.78rem;padding:9px 12px;margin-bottom:12px;display:none;"></div>
+
+          <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label">New Email Address</label>
+            <input type="email" id="newEmail" placeholder="newemail@example.com">
+          </div>
+          <button id="emailBtn" onclick="updateEmail()" class="btn btn-primary">
+            Update Email
+          </button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+</body>
+</html>
