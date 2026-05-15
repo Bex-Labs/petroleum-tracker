@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Customer Dashboard | PetroTrack</title>
   <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script defer src="app.js"></script>
   <script>
@@ -30,42 +31,55 @@
 </head>
 <body>
 <div class="app-layout">
+
+  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <div class="brand-icon">⛽</div>
+      <div class="sidebar-brand-icon">
+        <span class="material-symbols-outlined">local_gas_station</span>
+      </div>
       <div>
         <div class="brand-name">PetroTrack</div>
-        <div class="brand-tagline">Industrial Command</div>
+        <div class="brand-tagline">Fuel Network</div>
       </div>
     </div>
     <nav class="sidebar-nav">
       <div class="nav-label">Main</div>
-      <div class="nav-link active"><span class="nav-icon">🖥</span> Dashboard</div>
-      <div class="nav-link" onclick="document.getElementById('approvedStations').scrollIntoView({behavior:'smooth'})"><span class="nav-icon">⛽</span> Stations</div>
-      <div class="nav-link" onclick="document.getElementById('searchInput').focus()"><span class="nav-icon">🔍</span> Search</div>
+      <div class="nav-link active">
+        <span class="material-symbols-outlined">dashboard</span> Dashboard
+      </div>
+      <div class="nav-link" onclick="document.getElementById('approvedStations').scrollIntoView({behavior:'smooth'})">
+        <span class="material-symbols-outlined">local_gas_station</span> Stations
+      </div>
+      <div class="nav-link" onclick="document.getElementById('searchInput').focus()">
+        <span class="material-symbols-outlined">search</span> Search
+      </div>
       <div class="nav-label">Tools</div>
-      <a href="settings.html" class="nav-link" style="text-decoration:none;"><span class="nav-icon">⚙️</span> Settings</a>
+      <a href="settings.html" class="nav-link" style="text-decoration:none;">
+        <span class="material-symbols-outlined">settings</span> Settings
+      </a>
     </nav>
     <div class="sidebar-footer">
-      <button id="logoutBtn" class="btn btn-logout" style="width:100%; justify-content:center;">↩ Logout</button>
+      <button id="logoutBtn" class="btn btn-logout">
+        <span class="material-symbols-outlined" style="font-size:18px;">logout</span> Logout
+      </button>
     </div>
   </aside>
 
+  <!-- Main -->
   <div class="main-content">
     <header class="topbar">
       <div class="topbar-left">
-        <div>
-          <div class="topbar-title">Active Stations</div>
-          <div class="topbar-subtitle">Live fuel availability across the network</div>
-        </div>
+        <div class="topbar-title">Fuel Dashboard</div>
+        <div class="topbar-subtitle">Current local prices and station availability</div>
       </div>
       <div class="topbar-right">
-        <span class="badge badge-active" style="font-size:0.7rem;"><span class="badge-dot"></span> LIVE</span>
-
-        <!-- Notification Bell -->
+        <span class="badge badge-active">
+          <span class="badge-dot"></span> LIVE
+        </span>
         <div class="notif-bell-wrap">
-          <button id="notifBell" class="notif-bell-btn" onclick="toggleNotifPanel()">
-            🔔
+          <button class="notif-bell-btn" onclick="toggleNotifPanel()">
+            <span class="material-symbols-outlined">notifications</span>
             <span class="notif-badge" id="notifBadge" style="display:none;"></span>
           </button>
           <div class="notif-panel" id="notifPanel">
@@ -76,14 +90,17 @@
             <div class="notif-list" id="notifList"></div>
           </div>
         </div>
-
-        <span class="topbar-badge" id="userEmail">—</span>
+        <div class="topbar-badge">
+          <span class="material-symbols-outlined" style="font-size:16px;">person</span>
+          <span id="userEmail">—</span>
+        </div>
       </div>
     </header>
 
     <main class="page-body">
+      <!-- Search -->
       <div class="search-bar">
-        <input type="text" id="searchInput" placeholder="🔍  Search stations or locations…" style="flex:2;">
+        <input type="text" id="searchInput" placeholder="🔍  Search stations or locations…">
         <select id="fuelFilter">
           <option value="">⛽ Fuel Type: All</option>
           <option value="petrol">⛽ Petrol (PMS)</option>
@@ -91,11 +108,15 @@
           <option value="kerosene">🔥 Kerosene (DPK)</option>
           <option value="lpg">🫙 LPG / Cooking Gas</option>
         </select>
-        <input type="number" id="maxPrice" placeholder="₦ Max Price">
+        <input type="number" id="maxPrice" placeholder="₦ Max Price" style="flex:0.6; min-width:120px;">
       </div>
 
-      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px;" id="approvedStations">
-        <div class="empty"><div class="empty-icon">⛽</div><div class="empty-text">Loading stations…</div></div>
+      <!-- Stations Grid -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px;" id="approvedStations">
+        <div class="empty">
+          <div class="empty-icon">⛽</div>
+          <div class="empty-text">Loading stations…</div>
+        </div>
       </div>
     </main>
   </div>

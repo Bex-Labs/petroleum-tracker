@@ -5,601 +5,102 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PetroTrack — Find Fuel Near You</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    /* ── Landing-specific styles ── */
-    body { overflow-x: hidden; }
-
-    /* NAV */
-    .landing-nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      height: 64px;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 5%;
-      background: rgba(7,10,16,0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(37,44,61,0.6);
-    }
-
-    .nav-brand {
-      display: flex; align-items: center; gap: 10px;
-      font-family: var(--font-display); font-size: 1.1rem; font-weight: 700;
-      color: var(--text-1);
-    }
-
-    .nav-brand-icon {
-      width: 32px; height: 32px; background: var(--accent);
-      border-radius: var(--r-sm);
-      display: flex; align-items: center; justify-content: center; font-size: 1rem;
-    }
-
-    .nav-links { display: flex; align-items: center; gap: 8px; }
-
-    /* HERO */
-    .hero {
-      min-height: 100vh;
-      display: flex; align-items: center; justify-content: center;
-      text-align: center;
-      padding: 100px 5% 80px;
-      position: relative;
-      background: var(--bg-base);
-      background-image:
-        radial-gradient(ellipse at 20% 40%, rgba(59,111,245,0.08) 0%, transparent 55%),
-        radial-gradient(ellipse at 80% 60%, rgba(245,166,35,0.05) 0%, transparent 55%);
-    }
-
-    /* Animated grid lines */
-    .hero::before {
-      content: '';
-      position: absolute; inset: 0; pointer-events: none; opacity: 0.03;
-      background-image:
-        repeating-linear-gradient(0deg, transparent, transparent 50px, var(--accent) 50px, var(--accent) 51px),
-        repeating-linear-gradient(90deg, transparent, transparent 50px, var(--accent) 50px, var(--accent) 51px);
-    }
-
-    .hero-content { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; }
-
-    .hero-eyebrow {
-      display: inline-flex; align-items: center; gap: 7px;
-      background: var(--accent-glow); border: 1px solid rgba(59,111,245,0.25);
-      border-radius: 999px; padding: 5px 14px;
-      font-size: 0.72rem; font-weight: 600; color: var(--accent);
-      text-transform: uppercase; letter-spacing: 0.08em;
-      margin-bottom: 1.5rem;
-    }
-
-    .hero-eyebrow::before {
-      content: ''; width: 6px; height: 6px; border-radius: 50%;
-      background: var(--accent); box-shadow: 0 0 6px var(--accent);
-      animation: blink 1.5s ease infinite;
-    }
-
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-    .hero-title {
-      font-family: var(--font-display);
-      font-size: clamp(2.2rem, 6vw, 3.8rem);
-      font-weight: 700; line-height: 1.1;
-      color: var(--text-1); margin-bottom: 1.25rem;
-    }
-
-    .hero-title span { color: var(--accent); }
-
-    .hero-sub {
-      font-size: clamp(0.9rem, 2vw, 1.05rem);
-      color: var(--text-2); line-height: 1.7;
-      max-width: 520px; margin: 0 auto 2.5rem;
-    }
-
-    .hero-cta {
-      display: flex; align-items: center; justify-content: center;
-      gap: 12px; flex-wrap: wrap;
-    }
-
-    .btn-hero-primary {
-      background: var(--accent); color: #fff;
-      border: 1px solid var(--accent); border-radius: var(--r-md);
-      padding: 13px 28px; font-size: 0.9rem; font-weight: 600;
-      font-family: var(--font); cursor: pointer; transition: all 0.15s;
-      text-decoration: none; display: inline-flex; align-items: center; gap: 7px;
-    }
-    .btn-hero-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
-
-    .btn-hero-ghost {
-      background: transparent; color: var(--text-2);
-      border: 1px solid var(--border); border-radius: var(--r-md);
-      padding: 13px 28px; font-size: 0.9rem; font-weight: 600;
-      font-family: var(--font); cursor: pointer; transition: all 0.15s;
-      text-decoration: none; display: inline-flex; align-items: center; gap: 7px;
-    }
-    .btn-hero-ghost:hover { border-color: var(--border-light); color: var(--text-1); }
-
-    .hero-stats {
-      display: flex; align-items: center; justify-content: center;
-      gap: 2rem; flex-wrap: wrap;
-      margin-top: 3.5rem; padding-top: 2.5rem;
-      border-top: 1px solid var(--border);
-    }
-
-    .hero-stat-val {
-      font-family: var(--font-display); font-size: 1.7rem; font-weight: 700;
-      color: var(--text-1); line-height: 1;
-    }
-    .hero-stat-label { font-size: 0.72rem; color: var(--text-3); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.07em; }
-
-    .hero-stat-divider { width: 1px; height: 40px; background: var(--border); }
-
-    /* FEATURES */
-    .features {
-      padding: 100px 5%;
-      background: var(--bg-surface);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .section-label {
-      text-align: center;
-      font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.1em; color: var(--accent); margin-bottom: 12px;
-    }
-
-    .section-title {
-      text-align: center;
-      font-family: var(--font-display); font-size: clamp(1.5rem, 4vw, 2.2rem);
-      font-weight: 700; color: var(--text-1); margin-bottom: 0.75rem;
-    }
-
-    .section-sub {
-      text-align: center; font-size: 0.9rem; color: var(--text-2);
-      max-width: 500px; margin: 0 auto 3.5rem; line-height: 1.7;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 16px; max-width: 1100px; margin: 0 auto;
-    }
-
-    .feature-card {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--r-lg); padding: 1.75rem;
-      transition: border-color 0.2s, transform 0.2s;
-    }
-    .feature-card:hover { border-color: var(--border-light); transform: translateY(-3px); }
-
-    .feature-icon {
-      width: 44px; height: 44px; border-radius: var(--r-md);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.3rem; margin-bottom: 1rem;
-      border: 1px solid var(--border);
-    }
-
-    .feature-title {
-      font-family: var(--font-display); font-size: 0.95rem;
-      font-weight: 700; color: var(--text-1); margin-bottom: 6px;
-    }
-
-    .feature-desc { font-size: 0.82rem; color: var(--text-2); line-height: 1.6; }
-
-    /* HOW IT WORKS */
-    .how-it-works {
-      padding: 100px 5%;
-      background: var(--bg-base);
-    }
-
-    .steps-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1px; background: var(--border);
-      border: 1px solid var(--border); border-radius: var(--r-lg);
-      overflow: hidden; max-width: 900px; margin: 0 auto;
-    }
-
-    .step {
-      background: var(--bg-card); padding: 2rem 1.75rem;
-      text-align: center;
-    }
-
-    .step-num {
-      width: 36px; height: 36px; border-radius: 50%;
-      background: var(--accent-glow); border: 1px solid rgba(59,111,245,0.3);
-      color: var(--accent); font-family: var(--font-display);
-      font-size: 0.85rem; font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 1rem;
-    }
-
-    .step-icon { font-size: 1.6rem; margin-bottom: 0.75rem; }
-
-    .step-title {
-      font-family: var(--font-display); font-size: 0.9rem;
-      font-weight: 700; color: var(--text-1); margin-bottom: 6px;
-    }
-
-    .step-desc { font-size: 0.78rem; color: var(--text-2); line-height: 1.6; }
-
-    /* ROLES */
-    .roles {
-      padding: 100px 5%;
-      background: var(--bg-surface);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .roles-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px; max-width: 900px; margin: 0 auto;
-    }
-
-    .role-feature-card {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--r-lg); padding: 1.75rem;
-      text-align: center; transition: all 0.2s;
-    }
-
-    .role-feature-card:hover { border-color: var(--accent); transform: translateY(-3px); }
-    .role-feature-card.seller:hover { border-color: var(--amber); }
-    .role-feature-card.admin:hover  { border-color: var(--green); }
-
-    .role-big-icon { font-size: 2.5rem; margin-bottom: 1rem; }
-
-    .role-feature-title {
-      font-family: var(--font-display); font-size: 1.1rem;
-      font-weight: 700; color: var(--text-1); margin-bottom: 6px;
-    }
-
-    .role-feature-desc { font-size: 0.8rem; color: var(--text-2); line-height: 1.6; margin-bottom: 1.25rem; }
-
-    .role-feature-list {
-      list-style: none; text-align: left;
-      display: flex; flex-direction: column; gap: 6px;
-    }
-
-    .role-feature-list li {
-      display: flex; align-items: flex-start; gap: 7px;
-      font-size: 0.78rem; color: var(--text-2);
-    }
-
-    .role-feature-list li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
-
-    /* FUEL TYPES */
-    .fuels {
-      padding: 80px 5%; background: var(--bg-base);
-    }
-
-    .fuels-grid {
-      display: flex; justify-content: center; flex-wrap: wrap;
-      gap: 12px; max-width: 700px; margin: 0 auto;
-    }
-
-    .fuel-type-card {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--r-lg); padding: 1.5rem 2rem;
-      text-align: center; flex: 1; min-width: 140px;
-      transition: all 0.2s;
-    }
-    .fuel-type-card:hover { border-color: var(--border-light); transform: translateY(-2px); }
-
-    .fuel-type-icon { font-size: 2rem; margin-bottom: 0.5rem; }
-    .fuel-type-name { font-family: var(--font-display); font-size: 0.9rem; font-weight: 700; color: var(--text-1); }
-    .fuel-type-abbr { font-size: 0.68rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 2px; }
-
-    /* CTA BANNER */
-    .cta-banner {
-      padding: 100px 5%; text-align: center;
-      background: var(--bg-surface);
-      border-top: 1px solid var(--border);
-      position: relative; overflow: hidden;
-    }
-
-    .cta-banner::before {
-      content: '';
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 600px; height: 300px;
-      background: radial-gradient(ellipse, rgba(59,111,245,0.08) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    .cta-title {
-      font-family: var(--font-display);
-      font-size: clamp(1.6rem, 4vw, 2.4rem);
-      font-weight: 700; color: var(--text-1); margin-bottom: 0.75rem;
-      position: relative; z-index: 1;
-    }
-
-    .cta-sub {
-      font-size: 0.9rem; color: var(--text-2); margin-bottom: 2rem;
-      position: relative; z-index: 1;
-    }
-
-    .cta-buttons {
-      display: flex; align-items: center; justify-content: center;
-      gap: 12px; flex-wrap: wrap; position: relative; z-index: 1;
-    }
-
-    /* FOOTER */
-    .footer {
-      padding: 2rem 5%; border-top: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 1rem;
-      background: var(--bg-base);
-    }
-
-    .footer-brand {
-      display: flex; align-items: center; gap: 8px;
-      font-family: var(--font-display); font-size: 0.9rem;
-      font-weight: 700; color: var(--text-1);
-    }
-
-    .footer-copy { font-size: 0.75rem; color: var(--text-3); }
-
-    .footer-links {
-      display: flex; gap: 16px;
-    }
-
-    .footer-links a {
-      font-size: 0.78rem; color: var(--text-3); transition: color 0.15s;
-    }
-    .footer-links a:hover { color: var(--text-2); }
-
-    /* Responsive */
-    @media (max-width: 640px) {
-      .hero-stat-divider { display: none; }
-      .hero-stats { gap: 1.5rem; }
-      .landing-nav .btn-hero-ghost { display: none; }
-      .steps-grid { grid-template-columns: 1fr; }
-      .footer { flex-direction: column; text-align: center; }
-      .footer-links { justify-content: center; }
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 </head>
 <body>
 
-  <!-- NAV -->
+  <!-- Nav -->
   <nav class="landing-nav">
-    <div class="nav-brand">
-      <div class="nav-brand-icon">⛽</div>
-      PetroTrack
-    </div>
-    <div class="nav-links">
-      <a href="login.html" class="btn-hero-ghost" style="padding:8px 18px; font-size:0.82rem;">Sign In</a>
-      <a href="index.html" class="btn-hero-primary" style="padding:8px 18px; font-size:0.82rem;">Get Started →</a>
+    <a href="index.html" class="landing-nav-brand">
+      <span class="material-symbols-outlined landing-nav-brand-icon">local_gas_station</span>
+      <span class="landing-nav-brand-name">PetroTrack</span>
+    </a>
+    <div class="landing-nav-links">
+      <a href="login.html" class="btn btn-secondary btn-sm">Sign In</a>
+      <a href="signup.html" class="btn btn-primary btn-sm">Get Started</a>
     </div>
   </nav>
 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-content">
-      <div class="hero-eyebrow">Live Fuel Tracking Network</div>
-
-      <h1 class="hero-title">
-        Find Fuel.<br>
-        <span>Skip the Queue.</span>
-      </h1>
-
-      <p class="hero-sub">
-        PetroTrack shows you real-time fuel availability at stations near you —
-        petrol, diesel, kerosene, and cooking gas — before you leave the house.
-      </p>
-
-      <div class="hero-cta">
-        <a href="index.html" class="btn-hero-primary">Get Started Free →</a>
-        <a href="login.html" class="btn-hero-ghost">Sign In</a>
+  <!-- Hero -->
+  <section style="background: var(--surface-container-low);">
+    <div class="landing-hero">
+      <div class="landing-live-badge">
+        <span class="badge-dot"></span>
+        Live Price Updates
       </div>
-
-      <div class="hero-stats">
-        <div>
-          <div class="hero-stat-val" id="liveStations">—</div>
-          <div class="hero-stat-label">Active Stations</div>
-        </div>
-        <div class="hero-stat-divider"></div>
-        <div>
-          <div class="hero-stat-val" id="liveUsers">—</div>
-          <div class="hero-stat-label">Registered Users</div>
-        </div>
-        <div class="hero-stat-divider"></div>
-        <div>
-          <div class="hero-stat-val">4</div>
-          <div class="hero-stat-label">Fuel Types Tracked</div>
-        </div>
-        <div class="hero-stat-divider"></div>
-        <div>
-          <div class="hero-stat-val" style="color:var(--green);">LIVE</div>
-          <div class="hero-stat-label">Real-time Updates</div>
-        </div>
+      <h1>Find Fuel Near You</h1>
+      <p>Locate the cheapest fuel stations, compare real-time prices, and optimize your journey across the PetroTrack network.</p>
+      <div class="landing-hero-btns">
+        <a href="signup.html" class="btn btn-primary" style="padding: 13px 28px; font-size: 0.95rem;">
+          Get Started
+          <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
+        </a>
+        <a href="login.html" class="btn btn-secondary" style="padding: 13px 28px; font-size: 0.95rem;">
+          Browse Map
+        </a>
       </div>
     </div>
   </section>
 
-  <!-- FUEL TYPES -->
-  <section class="fuels">
-    <div class="section-label">What We Track</div>
-    <div class="section-title" style="margin-bottom:2rem;">All Major Fuel Types</div>
-    <div class="fuels-grid">
-      <div class="fuel-type-card">
-        <div class="fuel-type-icon">⛽</div>
-        <div class="fuel-type-name">Petrol</div>
-        <div class="fuel-type-abbr">PMS</div>
-      </div>
-      <div class="fuel-type-card">
-        <div class="fuel-type-icon">🛢</div>
-        <div class="fuel-type-name">Diesel</div>
-        <div class="fuel-type-abbr">AGO</div>
-      </div>
-      <div class="fuel-type-card">
-        <div class="fuel-type-icon">🔥</div>
-        <div class="fuel-type-name">Kerosene</div>
-        <div class="fuel-type-abbr">DPK</div>
-      </div>
-      <div class="fuel-type-card">
-        <div class="fuel-type-icon">🫙</div>
-        <div class="fuel-type-name">Cooking Gas</div>
-        <div class="fuel-type-abbr">LPG</div>
-      </div>
+  <!-- Stats -->
+  <div class="landing-stats">
+    <div class="landing-stat">
+      <div class="landing-stat-value">2.4M+</div>
+      <div class="landing-stat-label">Active Users</div>
     </div>
-  </section>
+    <div class="landing-stat">
+      <div class="landing-stat-value">15k+</div>
+      <div class="landing-stat-label">Partner Stations</div>
+    </div>
+    <div class="landing-stat">
+      <div class="landing-stat-value">99.9%</div>
+      <div class="landing-stat-label">Uptime</div>
+    </div>
+  </div>
 
-  <!-- FEATURES -->
-  <section class="features">
-    <div class="section-label">Features</div>
-    <div class="section-title">Everything You Need</div>
-    <div class="section-sub">Built specifically for the Nigerian fuel market</div>
+  <!-- Features -->
+  <section class="landing-features">
+    <h2>Smart Insights</h2>
     <div class="features-grid">
       <div class="feature-card">
-        <div class="feature-icon" style="background:var(--accent-glow); border-color:rgba(59,111,245,0.25);">🗺</div>
-        <div class="feature-title">Live Station Map</div>
-        <div class="feature-desc">See approved fuel stations and their current availability status in real time.</div>
+        <div class="feature-icon blue">🎯</div>
+        <h3>Precision Tracking</h3>
+        <p>Real-time GPS integration ensures you find the exact pump without the detour.</p>
       </div>
       <div class="feature-card">
-        <div class="feature-icon" style="background:var(--green-dim); border-color:rgba(34,197,94,0.25);">📍</div>
-        <div class="feature-title">Get Directions</div>
-        <div class="feature-desc">One tap opens Google Maps with turn-by-turn directions straight to the station.</div>
+        <div class="feature-icon orange">📉</div>
+        <h3>Price Comparison</h3>
+        <p>Intelligent algorithms filter the best local deals based on your fuel type preferences.</p>
       </div>
       <div class="feature-card">
-        <div class="feature-icon" style="background:var(--amber-dim); border-color:rgba(245,166,35,0.25);">💰</div>
-        <div class="feature-title">Price Tracking</div>
-        <div class="feature-desc">See current pump prices before you go. Filter stations by maximum price.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon" style="background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.2);">🔔</div>
-        <div class="feature-title">Instant Notifications</div>
-        <div class="feature-desc">Get alerts for national fuel price updates and availability changes near you.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon" style="background:rgba(139,92,246,0.1); border-color:rgba(139,92,246,0.2);">🚩</div>
-        <div class="feature-title">Report Incorrect Info</div>
-        <div class="feature-desc">Spot wrong fuel status? Report it in seconds. Our team reviews and corrects it fast.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon" style="background:var(--accent-glow); border-color:rgba(59,111,245,0.25);">⚡</div>
-        <div class="feature-title">Real-time Updates</div>
-        <div class="feature-desc">Station owners update availability live. What you see is always current.</div>
+        <div class="feature-icon green">🗺️</div>
+        <h3>Interactive Network</h3>
+        <p>Explore thousands of verified stations across the country in real-time.</p>
       </div>
     </div>
   </section>
 
-  <!-- HOW IT WORKS -->
-  <section class="how-it-works">
-    <div class="section-label">How It Works</div>
-    <div class="section-title">Simple. Fast. Reliable.</div>
-    <div class="section-sub" style="margin-bottom:3rem;">Get started in under a minute</div>
-    <div class="steps-grid">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-icon">📝</div>
-        <div class="step-title">Create Account</div>
-        <div class="step-desc">Sign up free as a customer or station owner. No credit card needed.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-icon">🔍</div>
-        <div class="step-title">Search Stations</div>
-        <div class="step-desc">Find stations near you filtered by fuel type and price.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-icon">🗺</div>
-        <div class="step-title">Get Directions</div>
-        <div class="step-desc">Tap Get Directions and go straight to a station with fuel available.</div>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-icon">⛽</div>
-        <div class="step-title">Fill Up</div>
-        <div class="step-desc">No more wasted trips. Arrive knowing fuel is available.</div>
-      </div>
+  <!-- CTA Banner -->
+  <div style="padding: 0 var(--sp-6); max-width: 900px; margin: 0 auto var(--sp-10);">
+    <div class="landing-cta-banner">
+      <h2>Find Fuel Faster</h2>
+      <p>Open our interactive map to see real-time price fluctuations and route optimization.</p>
+      <a href="signup.html" class="btn btn-white" style="padding: 13px 28px;">
+        <span class="material-symbols-outlined" style="font-size:18px;">map</span>
+        View Station Map
+      </a>
     </div>
-  </section>
+  </div>
 
-  <!-- ROLES -->
-  <section class="roles">
-    <div class="section-label">Who It's For</div>
-    <div class="section-title">Built for Everyone</div>
-    <div class="section-sub" style="margin-bottom:3rem;">Three roles, one platform</div>
-    <div class="roles-grid">
-      <div class="role-feature-card customer">
-        <div class="role-big-icon">🚗</div>
-        <div class="role-feature-title">Customers</div>
-        <div class="role-feature-desc">Find fuel fast without driving around guessing.</div>
-        <ul class="role-feature-list">
-          <li>Live availability across stations</li>
-          <li>Filter by fuel type and price</li>
-          <li>One-tap directions</li>
-          <li>Report incorrect station info</li>
-          <li>Price update notifications</li>
-        </ul>
-      </div>
-      <div class="role-feature-card seller">
-        <div class="role-big-icon">⛽</div>
-        <div class="role-feature-title">Station Owners</div>
-        <div class="role-feature-desc">List your station and attract customers actively looking for fuel.</div>
-        <ul class="role-feature-list">
-          <li>Register multiple stations</li>
-          <li>Update fuel availability live</li>
-          <li>Set and update prices</li>
-          <li>View customer reports</li>
-          <li>Reach verified customers</li>
-        </ul>
-      </div>
-      <div class="role-feature-card admin">
-        <div class="role-big-icon">🖥</div>
-        <div class="role-feature-title">Administrators</div>
-        <div class="role-feature-desc">Keep the network clean, accurate and operational.</div>
-        <ul class="role-feature-list">
-          <li>Approve and verify stations</li>
-          <li>Manage all users and roles</li>
-          <li>Review and resolve reports</li>
-          <li>Broadcast price updates</li>
-          <li>Full network oversight</li>
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <!-- CTA BANNER -->
-  <section class="cta-banner">
-    <h2 class="cta-title">Ready to Find Fuel Faster?</h2>
-    <p class="cta-sub">Join PetroTrack today. Free for customers, free for station owners.</p>
-    <div class="cta-buttons">
-      <a href="index.html" class="btn-hero-primary">Create Free Account →</a>
-      <a href="login.html" class="btn-hero-ghost">Sign In</a>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer class="footer">
-    <div class="footer-brand">
-      <div class="nav-brand-icon" style="width:24px;height:24px;font-size:0.75rem;">⛽</div>
-      PetroTrack
-    </div>
-    <div class="footer-copy">© 2026 PetroTrack. Built for Nigeria.</div>
-    <div class="footer-links">
-      <a href="login.html">Sign In</a>
-      <a href="index.html">Sign Up</a>
-      <a href="admin-login.html">Admin</a>
+  <!-- Footer -->
+  <footer class="landing-footer">
+    <p>© 2024 PetroTrack Systems. All rights reserved.</p>
+    <div class="landing-footer-links">
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Service</a>
+      <a href="#">Contact Support</a>
     </div>
   </footer>
 
-  <!-- Load live stats from Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script>
-    const SUPABASE_URL = "https://jvjognshdiyidvhhzlbd.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_GLP0p0tvCCAnG-aNru4RPw_Ng5_4Qnd";
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    (async () => {
-      try {
-        const [{ count: sc }, { count: uc }] = await Promise.all([
-          sb.from("stations").select("*", { count:"exact", head:true }).eq("status","approved"),
-          sb.from("users").select("*",    { count:"exact", head:true })
-        ]);
-        const sEl = document.getElementById("liveStations");
-        const uEl = document.getElementById("liveUsers");
-        if (sEl) sEl.textContent = sc ?? "—";
-        if (uEl) uEl.textContent = uc ?? "—";
-      } catch(e) { console.log(e); }
-    })();
-  </script>
 </body>
 </html>
